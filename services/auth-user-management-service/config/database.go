@@ -39,7 +39,7 @@ func ConnectDB() {
 	fmt.Println("Connected to PostgreSQL successfully!")
 	DB = db
 
-	// Auto Migration: GORM sẽ tự động tạo bảng nếu chưa có (Giống chế độ update của Hibernate)
+	// Auto Migration: GORM will automatically create/update the table schema
 	err = db.AutoMigrate(&domain.User{})
 	if err != nil {
 		log.Fatalf("Failed to auto migrate: %v", err)
