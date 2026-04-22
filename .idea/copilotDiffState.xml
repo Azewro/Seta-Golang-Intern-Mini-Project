@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CopilotDiffPersistence">
+    <option name="pendingDiffs">
+      <map>
+        <entry key="$PROJECT_DIR$/docker-compose.yml">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/docker-compose.yml" />
+              <option name="updatedContent" value="version: '3.8'&#10;&#10;services:&#10;  db:&#10;    image: postgres:15-alpine&#10;    container_name: seta_postgres_db&#10;    environment:&#10;      POSTGRES_USER: postgres&#10;      POSTGRES_PASSWORD: password&#10;      POSTGRES_DB: seta_miniproject_db&#10;    ports:&#10;      - &quot;5432:5432&quot;&#10;    volumes:&#10;      - postgres_data:/var/lib/postgresql/data&#10;    restart: unless-stopped&#10;&#10;volumes:&#10;  postgres_data:&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/services/auth-user-management-service/.env">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/services/auth-user-management-service/.env" />
+              <option name="updatedContent" value="DB_HOST=localhost&#10;DB_PORT=5432&#10;DB_USER=postgres&#10;DB_PASSWORD=password&#10;DB_NAME=seta_miniproject_db&#10;PORT=8080&#10;JWT_SECRET=super-secret-key-for-jwt" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/services/auth-user-management-service/cmd/main.go">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/services/auth-user-management-service/cmd/main.go" />
+              <option name="originalContent" value="package main&#10;" />
+              <option name="updatedContent" value="package main&#10;&#10;import (&#10;&#9;&quot;log&quot;&#10;&#9;&quot;os&quot;&#10;&#10;&#9;&quot;github.com/gin-gonic/gin&quot;&#10;&#10;&#9;&quot;auth-user-management-service/config&quot;&#10;)&#10;&#10;func main() {&#10;&#9;// Nạp cấu hình từ .env&#10;&#9;config.LoadEnv()&#10;&#10;&#9;// Kết nối và Auto Migrate Databa&#10;&#9;config.ConnectDB()&#10;&#10;&#9;// Khởi tạo Gin App (tương tự SpringApplication.run)&#10;&#9;r := gin.Default()&#10;&#10;&#9;// API Health check&#10;&#9;r.GET(&quot;/health&quot;, func(c *gin.Context) {&#10;&#9;&#9;c.JSON(200, gin.H{&#10;&#9;&#9;&#9;&quot;status&quot;:  &quot;UP&quot;,&#10;&#9;&#9;&#9;&quot;service&quot;: &quot;auth-user-management-service&quot;,&#10;&#9;&#9;})&#10;&#9;})&#10;&#10;&#9;port := os.Getenv(&quot;PORT&quot;)&#10;&#9;if port == &quot;&quot; {&#10;&#9;&#9;port = &quot;8080&quot;&#10;&#9;}&#10;&#10;&#9;log.Printf(&quot;Server is starting on port http://localhost:%s\n&quot;, port)&#10;&#10;&#9;// Khởi chạy server&#10;&#9;if err := r.Run(&quot;:&quot; + port); err != nil {&#10;&#9;&#9;log.Fatalf(&quot;Server failed to start: %v&quot;, err)&#10;&#9;}&#10;}" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/services/auth-user-management-service/config/database.go">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/services/auth-user-management-service/config/database.go" />
+              <option name="updatedContent" value="package config&#10;&#10;import (&#10;&#9;&quot;fmt&quot;&#10;&#9;&quot;log&quot;&#10;&#9;&quot;os&quot;&#10;&#10;&#9;&quot;auth-user-management-service/internal/domain&quot;&#10;&#9;&quot;github.com/joho/godotenv&quot;&#10;&#9;&quot;gorm.io/driver/postgres&quot;&#10;&#9;&quot;gorm.io/gorm&quot;&#10;)&#10;&#10;var DB *gorm.DB&#10;&#10;func LoadEnv() {&#10;&#9;err := godotenv.Load()&#10;&#9;if err != nil {&#10;&#9;&#9;log.Println(&quot;No .env file found, using system environment variables&quot;)&#10;&#9;}&#10;}&#10;&#10;func ConnectDB() {&#10;&#9;host := os.Getenv(&quot;DB_HOST&quot;)&#10;&#9;port := os.Getenv(&quot;DB_PORT&quot;)&#10;&#9;user := os.Getenv(&quot;DB_USER&quot;)&#10;&#9;password := os.Getenv(&quot;DB_PASSWORD&quot;)&#10;&#9;dbname := os.Getenv(&quot;DB_NAME&quot;)&#10;&#10;&#9;dsn := fmt.Sprintf(&quot;host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Ho_Chi_Minh&quot;,&#10;&#9;&#9;host, user, password, dbname, port)&#10;&#10;&#9;db, err := gorm.Open(postgres.Open(dsn), &amp;gorm.Config{})&#10;&#9;if err != nil {&#10;&#9;&#9;log.Fatalf(&quot;Failed to connect to database: %v&quot;, err)&#10;&#9;}&#10;&#10;&#9;fmt.Println(&quot;Connected to PostgreSQL successfully!&quot;)&#10;&#9;DB = db&#10;&#10;&#9;// Auto Migration: GORM sẽ tự động tạo bảng nếu chưa có (Giống chế độ update của Hibernate)&#10;&#9;err = db.AutoMigrate(&amp;domain.User{})&#10;&#9;if err != nil {&#10;&#9;&#9;log.Fatalf(&quot;Failed to auto migrate: %v&quot;, err)&#10;&#9;}&#10;&#9;fmt.Println(&quot;Auto migration completed!&quot;)&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+        <entry key="$PROJECT_DIR$/services/auth-user-management-service/internal/domain/user.go">
+          <value>
+            <PendingDiffInfo>
+              <option name="filePath" value="$PROJECT_DIR$/services/auth-user-management-service/internal/domain/user.go" />
+              <option name="updatedContent" value="package domain&#10;&#10;import (&#10;&#9;&quot;time&quot;&#10;&#10;&#9;&quot;gorm.io/gorm&quot;&#10;)&#10;&#10;// User đại diện cho bản ghi user trong DB (Entity/Model)&#10;type User struct {&#10;&#9;ID        uint           `gorm:&quot;primaryKey;autoIncrement&quot; json:&quot;userId&quot;`&#10;&#9;Username  string         `gorm:&quot;type:varchar(100);not null&quot; json:&quot;username&quot;`&#10;&#9;Email     string         `gorm:&quot;type:varchar(100);uniqueIndex;not null&quot; json:&quot;email&quot;`&#10;&#9;Password  string         `gorm:&quot;type:varchar(255);not null&quot; json:&quot;-&quot;` // Giấu password khi parse/marshal JSON&#10;&#9;Role      string         `gorm:&quot;type:varchar(50);not null;default:'member'&quot; json:&quot;role&quot;` // manager hoặc member&#10;&#9;CreatedAt time.Time      `json:&quot;createdAt&quot;`&#10;&#9;UpdatedAt time.Time      `json:&quot;updatedAt&quot;`&#10;&#9;DeletedAt gorm.DeletedAt `gorm:&quot;index&quot; json:&quot;-&quot;`&#10;}&#10;" />
+            </PendingDiffInfo>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+</project>
