@@ -40,7 +40,7 @@ func ConnectDB() {
 	DB = db
 
 	// Auto Migration: GORM will automatically create/update the table schema
-	err = db.AutoMigrate(&domain.User{})
+	err = db.AutoMigrate(&domain.User{}, &domain.Session{})
 	if err != nil {
 		log.Fatalf("Failed to auto migrate: %v", err)
 	}

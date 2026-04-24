@@ -1,37 +1,143 @@
 package handler
+
 import (
-"net/http"
-"github.com/gin-gonic/gin"
-"auth-user-management-service/internal/usecase"
+	"errors"
+	"net/http"
+	"strconv"
+
+	"auth-user-management-service/internal/usecase"
+
+	"github.com/gin-gonic/gin"
 )
+
 // AuthHandler holds the dependencies for HTTP routing
 type AuthHandler struct {
-authUsecase usecase.AuthUsecase
+	authUsecase usecase.AuthUsecase
 }
+
 // NewAuthHandler injects usecase layer into handler
 func NewAuthHandler(authUsecase usecase.AuthUsecase) *AuthHandler {
-return &AuthHandler{
-authUsecase: authUsecase,
+	return &AuthHandler{authUsecase: authUsecase}
 }
-}
+
 // Register (POST /api/v1/auth/register)
 func (h *AuthHandler) Register(c *gin.Context) {
-// Parse the JSON request body
 var req usecase.RegisterRequest
 if err := c.ShouldBindJSON(&req); err != nil {
-c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}) // 400 Bad Request
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 return
 }
-// Process business logic
+
 newUser, err := h.authUsecase.Register(&req)
 if err != nil {
-// Status code can be dynamic (e.g., 409 Conflict if email exists)
-c.JSON(http.StatusConflict, gin.H{"error": err.Error()}) // 409 Conflict
+		switch {
+		case errors.Is(err, usecase.ErrEmailAlreadyUsed):
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+		case errors.Is(err, usecase.ErrInvalidRole):
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to register user"})
+		}
 return
 }
-// Respond with Created Entity (Password hidden by json tags in Struct)
+
 c.JSON(http.StatusCreated, gin.H{
 "message": "User registered successfully",
 "user":    newUser,
 })
+}
+
+// Login (POST /api/v1/auth/login)
+func (h *AuthHandler) Login(c *gin.Context) {
+	var req usecase.LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	loginResponse, err := h.authUsecase.Login(&req)
+	if err != nil {
+		switch {
+		case errors.Is(err, usecase.ErrInvalidCredentials):
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		case errors.Is(err, usecase.ErrJWTSecretMissing):
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to login"})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, loginResponse)
+}
+
+// Logout (POST /api/v1/auth/logout)
+func (h *AuthHandler) Logout(c *gin.Context) {
+	tokenIDValue, exists := c.Get("tokenID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing token context"})
+		return
+	}
+
+	tokenID, ok := tokenIDValue.(string)
+	if !ok || tokenID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token context"})
+		return
+	}
+
+	if err := h.authUsecase.Logout(tokenID); err != nil {
+		if errors.Is(err, usecase.ErrSessionUnavailable) {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to logout"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+}
+
+// ListUsers (GET /api/v1/users) manager only
+func (h *AuthHandler) ListUsers(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+
+	users, err := h.authUsecase.ListUsers(page, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch users"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"page":  page,
+		"limit": limit,
+		"data":  users,
+	})
+}
+
+// Me (GET /api/v1/users/me)
+func (h *AuthHandler) Me(c *gin.Context) {
+	userIDValue, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing user context"})
+		return
+	}
+
+	userID, ok := userIDValue.(uint)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
+		return
+	}
+
+	me, err := h.authUsecase.GetMyProfile(userID)
+	if err != nil {
+		if errors.Is(err, usecase.ErrUserNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch profile"})
+		return
+	}
+
+	c.JSON(http.StatusOK, me)
 }

@@ -4,12 +4,13 @@ import (
 	"log"
 	"os"
 
-	"github.com/gin-gonic/gin"
-
 	"auth-user-management-service/config"
 	"auth-user-management-service/internal/handler"
+	"auth-user-management-service/internal/middleware"
 	"auth-user-management-service/internal/repository"
 	"auth-user-management-service/internal/usecase"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -25,10 +26,13 @@ func main() {
 	// 1. Initialize Repository layer
 	userRepo := repository.NewUserRepository(config.DB)
 
-	// 2. Initialize Usecase layer
-	authUsecase := usecase.NewAuthUsecase(userRepo)
+	// 2. Initialize Repository layer for sessions
+	sessionRepo := repository.NewSessionRepository(config.DB)
 
-	// 3. Initialize Handler layer
+	// 3. Initialize Usecase layer
+	authUsecase := usecase.NewAuthUsecase(userRepo, sessionRepo)
+
+	// 4. Initialize Handler layer
 	authHandler := handler.NewAuthHandler(authUsecase)
 
 	// Initialize Gin App (similar to SpringApplication.run)
@@ -49,8 +53,21 @@ func main() {
 	{
 		auth := api.Group("/auth")
 		{
-			// POST /api/v1/auth/register
 			auth.POST("/register", authHandler.Register)
+			auth.POST("/login", authHandler.Login)
+		}
+
+		protected := api.Group("/")
+		protected.Use(middleware.AuthRequired(sessionRepo))
+		{
+			protected.POST("/auth/logout", authHandler.Logout)
+			protected.GET("/users/me", authHandler.Me)
+
+			manager := protected.Group("/")
+			manager.Use(middleware.ManagerOnly())
+			{
+				manager.GET("/users", authHandler.ListUsers)
+			}
 		}
 	}
 
