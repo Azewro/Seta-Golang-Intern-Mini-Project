@@ -35,34 +35,50 @@ export default function UsersPage() {
   }, [token]);
 
   if (loading) {
-    return <p>Loading users...</p>;
+    return (
+      <section className="card page-panel users-panel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>
+          <div className="spinner"></div> Loading workspace users...
+        </div>
+      </section>
+    );
   }
 
   return (
-    <section className="card">
-      <h2>Users (Manager only)</h2>
+    <section className="card page-panel users-panel">
+      <div style={{ marginBottom: '2.5rem' }}>
+        <h2 style={{ marginBottom: '0.5rem' }}>Users Directory</h2>
+        <p className="muted" style={{ margin: 0 }}>Manager override: Viewing all workspace accounts and access levels.</p>
+      </div>
+      
       {error && <p className="error">{error}</p>}
       {!error && (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Username</th>
-              <th>Email</th>
-              <th>Role</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.userId}>
-                <td>{u.userId}</td>
-                <td>{u.username}</td>
-                <td>{u.email}</td>
-                <td>{u.role}</td>
+        <div className="table-wrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Member ID</th>
+                <th>Username</th>
+                <th>Contact Email</th>
+                <th>Access Level</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr key={u.userId}>
+                  <td style={{ opacity: 0.6, fontFamily: 'monospace' }}>#{u.userId}</td>
+                  <td style={{ fontWeight: '500', color: '#fff' }}>{u.username}</td>
+                  <td className="muted">{u.email}</td>
+                  <td>
+                    <span className={`badge badge-${u.role}`}>
+                      {u.role}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   );

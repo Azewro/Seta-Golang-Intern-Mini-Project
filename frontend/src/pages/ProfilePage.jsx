@@ -4,25 +4,47 @@ export default function ProfilePage() {
   const { user } = useAuth();
 
   return (
-    <section className="card">
-      <h2>My Profile</h2>
+    <section className="card page-panel profile-panel">
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginBottom: '2.5rem' }}>
+        <div style={{ 
+          width: '76px', height: '76px', borderRadius: '50%', 
+          background: 'linear-gradient(135deg, var(--accent), var(--accent-alt))', 
+          display: 'flex', alignItems: 'center', justifyContent: 'center', 
+          fontSize: '2rem', fontWeight: 'bold', color: '#030712' 
+        }}>
+          {user?.username?.[0]?.toUpperCase() || 'U'}
+        </div>
+        <div>
+          <h2 style={{ marginBottom: '0.2rem' }}>My Profile</h2>
+          <p className="muted" style={{ margin: 0 }}>Manage your personal information and account security.</p>
+        </div>
+      </div>
+      
       <div className="profile-grid">
-        <p className="profile-row">
-          <strong>User ID:</strong> {user?.userId}
-        </p>
-        <p className="profile-row">
-          <strong>Username:</strong> {user?.username}
-        </p>
-        <p className="profile-row">
-          <strong>Email:</strong> {user?.email}
-        </p>
-        <p className="profile-row">
-          <strong>Role:</strong> {user?.role}
-        </p>
-        <p className="profile-row">
-          <strong>Verification:</strong> {user?.isVerified ? "Verified" : "Pending verification"}
-        </p>
+        <div className="profile-row">
+          <strong>Account ID</strong>
+          <span style={{ fontFamily: 'monospace', opacity: 0.8 }}>#{user?.userId}</span>
+        </div>
+        <div className="profile-row">
+          <strong>Username</strong>
+          <span>{user?.username}</span>
+        </div>
+        <div className="profile-row">
+          <strong>Email</strong>
+          <span>{user?.email}</span>
+        </div>
+        <div className="profile-row">
+          <strong>Workspace Role</strong>
+          <span className={`badge badge-${user?.role}`}>{user?.role}</span>
+        </div>
+        <div className="profile-row">
+          <strong>Verification Status</strong>
+          <span className={user?.isVerified ? "text-accent" : "text-danger"}>
+            {user?.isVerified ? "✓ Verified" : "⚠ Pending verification"}
+          </span>
+        </div>
       </div>
     </section>
   );
 }
+
