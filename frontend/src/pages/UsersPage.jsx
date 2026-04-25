@@ -7,14 +7,11 @@ export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
 
     async function loadUsers() {
-      setLoading(true);
-      setError("");
       try {
         const data = await listUsersApi(token, 1, 50);
         if (active) {
@@ -35,61 +32,38 @@ export default function UsersPage() {
     return () => {
       active = false;
     };
-  }, [token, reloadKey]);
+  }, [token]);
 
   if (loading) {
-    return (
-      <section className="card state-card">
-        <h2>Users (Manager only)</h2>
-        <p className="muted">Loading users...</p>
-      </section>
-    );
-  }
-
-  if (error) {
-    return (
-      <section className="card state-card">
-        <h2>Users (Manager only)</h2>
-        <p className="error">{error}</p>
-        <button type="button" className="primary" onClick={() => setReloadKey((prev) => prev + 1)}>
-          Retry
-        </button>
-      </section>
-    );
-  }
-
-  if (users.length === 0) {
-    return (
-      <section className="card state-card">
-        <h2>Users (Manager only)</h2>
-        <p className="muted">No users found.</p>
-      </section>
-    );
+    return <p>Loading users...</p>;
   }
 
   return (
     <section className="card">
       <h2>Users (Manager only)</h2>
-      <table className="table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Username</th>
-            <th>Email</th>
-            <th>Role</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((u) => (
-            <tr key={u.userId}>
-              <td>{u.userId}</td>
-              <td>{u.username}</td>
-              <td>{u.email}</td>
-              <td>{u.role}</td>
+      {error && <p className="error">{error}</p>}
+      {!error && (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Role</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {users.map((u) => (
+              <tr key={u.userId}>
+                <td>{u.userId}</td>
+                <td>{u.username}</td>
+                <td>{u.email}</td>
+                <td>{u.role}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </section>
   );
 }

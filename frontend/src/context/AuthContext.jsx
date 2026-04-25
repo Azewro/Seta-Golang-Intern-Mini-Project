@@ -1,8 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { setUnauthorizedHandler } from "../api/apiClient";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { loginApi, logoutApi } from "../api/authApi";
 import { getMeApi } from "../api/userApi";
-import { TOKEN_STORAGE_KEY, clearToken, getToken, setToken } from "../auth/tokenStorage";
+import { clearToken, getToken, setToken } from "../auth/tokenStorage";
 
 const AuthContext = createContext(null);
 
@@ -10,42 +9,6 @@ export function AuthProvider({ children }) {
   const [token, setTokenState] = useState(getToken());
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const resetSession = useCallback(() => {
-    clearToken();
-    setTokenState(null);
-    setUser(null);
-    setLoading(false);
-  }, []);
-
-  useEffect(() => {
-    setUnauthorizedHandler(() => {
-      resetSession();
-    });
-
-    return () => {
-      setUnauthorizedHandler(null);
-    };
-  }, [resetSession]);
-
-  useEffect(() => {
-    function onStorage(event) {
-      if (event.key !== TOKEN_STORAGE_KEY) {
-        return;
-      }
-
-      if (!event.newValue) {
-        setTokenState(null);
-        setUser(null);
-        return;
-      }
-
-      setTokenState(event.newValue);
-    }
-
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -65,8 +28,10 @@ export function AuthProvider({ children }) {
           setUser(me);
         }
       } catch {
+        clearToken();
         if (mounted) {
-          resetSession();
+          setTokenState(null);
+          setUser(null);
         }
       } finally {
         if (mounted) {
@@ -79,7 +44,7 @@ export function AuthProvider({ children }) {
     return () => {
       mounted = false;
     };
-  }, [token, resetSession]);
+  }, [token]);
 
   const login = async (payload) => {
     const data = await loginApi(payload);
@@ -95,7 +60,9 @@ export function AuthProvider({ children }) {
         await logoutApi(token);
       }
     } finally {
-      resetSession();
+      clearToken();
+      setTokenState(null);
+      setUser(null);
     }
   };
 

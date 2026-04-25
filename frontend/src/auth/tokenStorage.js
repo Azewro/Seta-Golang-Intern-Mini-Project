@@ -1,14 +1,14 @@
-export const TOKEN_STORAGE_KEY = "seta_access_token";
+const TOKEN_KEY = "seta_access_token";
 
 export function getToken() {
-  return localStorage.getItem(TOKEN_STORAGE_KEY);
+  return localStorage.getItem(TOKEN_KEY);
 }
 
 export function setToken(token) {
-  localStorage.setItem(TOKEN_STORAGE_KEY, token);
+  localStorage.setItem(TOKEN_KEY, token);
 }
 
 export function clearToken() {
-  localStorage.removeItem(TOKEN_STORAGE_KEY);
+  localStorage.removeItem(TOKEN_KEY);
 }
 

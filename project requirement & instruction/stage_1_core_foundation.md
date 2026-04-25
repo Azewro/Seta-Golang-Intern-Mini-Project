@@ -1,4 +1,4 @@
-# 🚀 Stage 1: The Core Foundation (Identity & Teams)
+Tôtôi c# 🚀 Stage 1: The Core Foundation (Identity & Teams)
 
 *Focus: API design, Database Modeling, Authentication, and basic Microservices communication.*
 

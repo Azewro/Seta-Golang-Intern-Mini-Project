@@ -8,7 +8,12 @@ export default function ToastContainer() {
       {toasts.map((toast) => (
         <div key={toast.id} className={`toast toast-${toast.type}`}>
           <span>{toast.message}</span>
-          <button type="button" className="toast-close" onClick={() => removeToast(toast.id)}>
+          <button
+            type="button"
+            className="toast-close"
+            aria-label="Close notification"
+            onClick={() => removeToast(toast.id)}
+          >
             x
           </button>
         </div>
@@ -16,4 +21,3 @@ export default function ToastContainer() {
     </div>
   );
 }
-

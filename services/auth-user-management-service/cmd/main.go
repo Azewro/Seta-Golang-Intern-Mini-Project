@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	// Load configuration from .env
+	// Load configuration from root .env.backend (or ENV_FILE)
 	config.LoadEnv()
 
 	// Connect and Auto Migrate Database
@@ -29,10 +29,13 @@ func main() {
 	// 2. Initialize Repository layer for sessions
 	sessionRepo := repository.NewSessionRepository(config.DB)
 
-	// 3. Initialize Usecase layer
-	authUsecase := usecase.NewAuthUsecase(userRepo, sessionRepo)
+	// 3. Initialize Repository layer for email verification
+	verifyRepo := repository.NewEmailVerificationRepository(config.DB)
 
-	// 4. Initialize Handler layer
+	// 4. Initialize Usecase layer
+	authUsecase := usecase.NewAuthUsecase(userRepo, sessionRepo, verifyRepo)
+
+	// 5. Initialize Handler layer
 	authHandler := handler.NewAuthHandler(authUsecase)
 
 	// Initialize Gin App (similar to SpringApplication.run)
@@ -54,6 +57,8 @@ func main() {
 		auth := api.Group("/auth")
 		{
 			auth.POST("/register", authHandler.Register)
+			auth.GET("/verify-email", authHandler.VerifyEmail)
+			auth.POST("/resend-verification", authHandler.ResendVerification)
 			auth.POST("/login", authHandler.Login)
 		}
 

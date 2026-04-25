@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
@@ -17,24 +17,45 @@ export default function Navbar() {
     }
   };
 
+  const navClassName = ({ isActive }) => (isActive ? "nav-link nav-link-active" : "nav-link");
+
   return (
     <header className="navbar">
       <div className="nav-content">
-        <strong>Seta Stage 1</strong>
+        <div className="nav-brand">
+          <strong>Seta Auth Portal</strong>
+          <span>Stage 1 • Identity and Team Foundation</span>
+        </div>
+
         <nav className="nav-links">
-          {!isAuthenticated && <Link className="nav-link" to="/login">Login</Link>}
-          {!isAuthenticated && <Link className="nav-link" to="/register">Register</Link>}
-          {isAuthenticated && <Link className="nav-link" to="/profile">My Profile</Link>}
-          {isAuthenticated && user?.role === "manager" && <Link className="nav-link" to="/users">Users</Link>}
+          {!isAuthenticated && (
+            <>
+              <NavLink className={navClassName} to="/login">
+                Login
+              </NavLink>
+              <NavLink className={navClassName} to="/register">
+                Register
+              </NavLink>
+            </>
+          )}
+
           {isAuthenticated && (
-            <button type="button" className="nav-btn" onClick={onLogout}>
-              Logout
-            </button>
+            <>
+              <NavLink className={navClassName} to="/profile">
+                My Profile
+              </NavLink>
+              {user?.role === "manager" && (
+                <NavLink className={navClassName} to="/users">
+                  Users
+                </NavLink>
+              )}
+              <button type="button" className="nav-btn" onClick={onLogout}>
+                Logout
+              </button>
+            </>
           )}
         </nav>
       </div>
     </header>
   );
 }
-
-

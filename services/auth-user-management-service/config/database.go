@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"auth-user-management-service/internal/domain"
 
@@ -15,10 +16,33 @@ import (
 var DB *gorm.DB
 
 func LoadEnv() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("No .env file found, using system environment variables")
+	// Priority order:
+	// 1) ENV_FILE explicit path
+	// 2) project root .env.backend
+	// 3) fallback to system environment variables
+	envFile := os.Getenv("ENV_FILE")
+	if envFile != "" {
+		if err := godotenv.Load(envFile); err != nil {
+			log.Printf("Failed to load env file from ENV_FILE (%s): %v", envFile, err)
+		}
+		return
 	}
+
+	candidates := []string{
+		filepath.Join("..", "..", ".env.backend"),
+		".env.backend",
+	}
+
+	for _, path := range candidates {
+		if _, err := os.Stat(path); err == nil {
+			if err := godotenv.Load(path); err != nil {
+				log.Printf("Failed to load env file (%s): %v", path, err)
+			}
+			return
+		}
+	}
+
+	log.Println("No .env.backend file found, using system environment variables")
 }
 
 func ConnectDB() {
@@ -40,7 +64,7 @@ func ConnectDB() {
 	DB = db
 
 	// Auto Migration: GORM will automatically create/update the table schema
-	err = db.AutoMigrate(&domain.User{}, &domain.Session{})
+	err = db.AutoMigrate(&domain.User{}, &domain.Session{}, &domain.EmailVerificationToken{})
 	if err != nil {
 		log.Fatalf("Failed to auto migrate: %v", err)
 	}

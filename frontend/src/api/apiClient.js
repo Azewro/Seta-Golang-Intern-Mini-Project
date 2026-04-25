@@ -1,9 +1,4 @@
 const API_PREFIX = "/api/v1";
-let onUnauthorized = null;
-
-export function setUnauthorizedHandler(handler) {
-  onUnauthorized = handler;
-}
 
 export class ApiError extends Error {
   constructor(message, status, details) {
@@ -34,9 +29,6 @@ async function request(path, options = {}, token) {
 
   if (!response.ok) {
     const message = body?.error || body?.message || `Request failed: ${response.status}`;
-    if (response.status === 401 && typeof onUnauthorized === "function") {
-      onUnauthorized();
-    }
     throw new ApiError(message, response.status, body);
   }
 
