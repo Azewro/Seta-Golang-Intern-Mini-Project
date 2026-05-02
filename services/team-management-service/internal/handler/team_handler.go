@@ -20,7 +20,7 @@ func NewTeamHandler(teamUsecase usecase.TeamUsecase) *TeamHandler {
 }
 
 func (h *TeamHandler) CreateTeam(c *gin.Context) {
-	userID, role, ok := getActorContext(c)
+	userID, role, _, ok := getActorContext(c)
 	if !ok {
 		return
 	}
@@ -41,7 +41,7 @@ func (h *TeamHandler) CreateTeam(c *gin.Context) {
 }
 
 func (h *TeamHandler) ListMyTeams(c *gin.Context) {
-	userID, _, ok := getActorContext(c)
+	userID, _, _, ok := getActorContext(c)
 	if !ok {
 		return
 	}
@@ -56,7 +56,7 @@ func (h *TeamHandler) ListMyTeams(c *gin.Context) {
 }
 
 func (h *TeamHandler) GetTeam(c *gin.Context) {
-	userID, _, ok := getActorContext(c)
+	userID, _, _, ok := getActorContext(c)
 	if !ok {
 		return
 	}
@@ -81,7 +81,7 @@ func (h *TeamHandler) AddMember(c *gin.Context) {
 }
 
 func (h *TeamHandler) RemoveMember(c *gin.Context) {
-	userID, role, ok := getActorContext(c)
+	userID, role, _, ok := getActorContext(c)
 	if !ok {
 		return
 	}
@@ -110,7 +110,7 @@ func (h *TeamHandler) AddManager(c *gin.Context) {
 }
 
 func (h *TeamHandler) RemoveManager(c *gin.Context) {
-	userID, role, ok := getActorContext(c)
+	userID, role, _, ok := getActorContext(c)
 	if !ok {
 		return
 	}
@@ -134,8 +134,8 @@ func (h *TeamHandler) RemoveManager(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Manager removed"})
 }
 
-func (h *TeamHandler) handleTeamAction(c *gin.Context, fn func(actorID uint, actorRole string, teamID uint, targetUserID uint) error, successMessage string) {
-	userID, role, ok := getActorContext(c)
+func (h *TeamHandler) handleTeamAction(c *gin.Context, fn func(actorID uint, actorRole string, token string, teamID uint, targetUserID uint) error, successMessage string) {
+	userID, role, token, ok := getActorContext(c)
 	if !ok {
 		return
 	}
@@ -152,7 +152,7 @@ func (h *TeamHandler) handleTeamAction(c *gin.Context, fn func(actorID uint, act
 		return
 	}
 
-	if err := fn(userID, role, teamID, req.UserID); err != nil {
+	if err := fn(userID, role, token, teamID, req.UserID); err != nil {
 		h.handleUsecaseError(c, err)
 		return
 	}
@@ -190,30 +190,36 @@ func parseUintParam(c *gin.Context, key string) (uint, error) {
 	return uint(parsed), nil
 }
 
-func getActorContext(c *gin.Context) (uint, string, bool) {
+func getActorContext(c *gin.Context) (uint, string, string, bool) {
 	userIDValue, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing user context"})
-		return 0, "", false
+		return 0, "", "", false
 	}
 
 	userID, ok := userIDValue.(uint)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
-		return 0, "", false
+		return 0, "", "", false
 	}
 
 	roleValue, exists := c.Get("role")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing role context"})
-		return 0, "", false
+		return 0, "", "", false
 	}
 
 	role, ok := roleValue.(string)
 	if !ok || role == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid role context"})
-		return 0, "", false
+		return 0, "", "", false
 	}
 
-	return userID, role, true
+	tokenValue, exists := c.Get("token")
+	token := ""
+	if exists {
+		token, _ = tokenValue.(string)
+	}
+
+	return userID, role, token, true
 }

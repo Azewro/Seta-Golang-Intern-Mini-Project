@@ -2,16 +2,15 @@ package middleware
 
 import (
 	"net/http"
-	"os"
 	"strings"
 
-	"team-management-service/pkg/utils"
+	"team-management-service/pkg/client"
 
 	"github.com/gin-gonic/gin"
 )
 
 // AuthRequired validates JWT and sets user context.
-func AuthRequired() gin.HandlerFunc {
+func AuthRequired(authClient client.AuthClient) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authorizationHeader := c.GetHeader("Authorization")
 		if authorizationHeader == "" {
@@ -27,16 +26,16 @@ func AuthRequired() gin.HandlerFunc {
 			return
 		}
 
-		jwtSecret := strings.TrimSpace(os.Getenv("JWT_SECRET"))
-		claims, err := utils.ParseToken(parts[1], jwtSecret)
+		user, err := authClient.VerifyToken(parts[1])
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired token"})
 			c.Abort()
 			return
 		}
 
-		c.Set("userID", claims.UserID)
-		c.Set("role", claims.Role)
+		c.Set("userID", user.ID)
+		c.Set("role", user.Role)
+		c.Set("token", parts[1]) // saving token for downstream calls if needed
 		c.Next()
 	}
 }

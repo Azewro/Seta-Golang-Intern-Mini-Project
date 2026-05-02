@@ -100,12 +100,12 @@ export default function RegisterPage() {
           {touched.email && emailError && <p className="field-error">{emailError}</p>}
           <input
             type="password"
-            placeholder="Password (min 6 chars)"
+            placeholder="Password (min 8 chars)"
             value={form.password}
             onChange={(e) => onChange("password", e.target.value)}
             onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
             className={touched.password && passwordError ? "input-error" : ""}
-            minLength={6}
+            minLength={8}
             required
           />
           {touched.password && passwordError && <p className="field-error">{passwordError}</p>}

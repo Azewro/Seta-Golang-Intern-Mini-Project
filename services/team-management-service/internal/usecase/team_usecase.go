@@ -7,6 +7,7 @@ import (
 
 	"team-management-service/internal/domain"
 	"team-management-service/internal/repository"
+	"team-management-service/pkg/client"
 
 	"gorm.io/gorm"
 )
@@ -51,19 +52,19 @@ type TeamUsecase interface {
 	CreateTeam(actorID uint, actorRole string, req *CreateTeamRequest) (*TeamResponse, error)
 	GetTeam(actorID uint, teamID uint) (*TeamResponse, error)
 	ListMyTeams(actorID uint) ([]TeamResponse, error)
-	AddMember(actorID uint, actorRole string, teamID uint, targetUserID uint) error
+	AddMember(actorID uint, actorRole string, token string, teamID uint, targetUserID uint) error
 	RemoveMember(actorID uint, actorRole string, teamID uint, targetUserID uint) error
-	AddManager(actorID uint, actorRole string, teamID uint, targetUserID uint) error
+	AddManager(actorID uint, actorRole string, token string, teamID uint, targetUserID uint) error
 	RemoveManager(actorID uint, actorRole string, teamID uint, targetUserID uint) error
 }
 
 type teamUsecaseImpl struct {
-	teamRepo repository.TeamRepository
-	userRepo repository.UserRepository
+	teamRepo   repository.TeamRepository
+	authClient client.AuthClient
 }
 
-func NewTeamUsecase(teamRepo repository.TeamRepository, userRepo repository.UserRepository) TeamUsecase {
-	return &teamUsecaseImpl{teamRepo: teamRepo, userRepo: userRepo}
+func NewTeamUsecase(teamRepo repository.TeamRepository, authClient client.AuthClient) TeamUsecase {
+	return &teamUsecaseImpl{teamRepo: teamRepo, authClient: authClient}
 }
 
 func (u *teamUsecaseImpl) CreateTeam(actorID uint, actorRole string, req *CreateTeamRequest) (*TeamResponse, error) {
@@ -118,7 +119,7 @@ func (u *teamUsecaseImpl) ListMyTeams(actorID uint) ([]TeamResponse, error) {
 	return response, nil
 }
 
-func (u *teamUsecaseImpl) AddMember(actorID uint, actorRole string, teamID uint, targetUserID uint) error {
+func (u *teamUsecaseImpl) AddMember(actorID uint, actorRole string, token string, teamID uint, targetUserID uint) error {
 	if actorRole != "manager" {
 		return ErrForbidden
 	}
@@ -126,11 +127,9 @@ func (u *teamUsecaseImpl) AddMember(actorID uint, actorRole string, teamID uint,
 		return err
 	}
 
-	if _, err := u.userRepo.FindByID(targetUserID); err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ErrUserNotFound
-		}
-		return err
+	users, err := u.authClient.GetUsers(token, []uint{targetUserID})
+	if err != nil || len(users) == 0 {
+		return ErrUserNotFound
 	}
 
 	membership, err := u.teamRepo.FindMembership(teamID, targetUserID)
@@ -166,7 +165,7 @@ func (u *teamUsecaseImpl) RemoveMember(actorID uint, actorRole string, teamID ui
 	return u.teamRepo.DeleteMembership(teamID, targetUserID)
 }
 
-func (u *teamUsecaseImpl) AddManager(actorID uint, actorRole string, teamID uint, targetUserID uint) error {
+func (u *teamUsecaseImpl) AddManager(actorID uint, actorRole string, token string, teamID uint, targetUserID uint) error {
 	if actorRole != "manager" {
 		return ErrForbidden
 	}
@@ -174,13 +173,12 @@ func (u *teamUsecaseImpl) AddManager(actorID uint, actorRole string, teamID uint
 		return err
 	}
 
-	targetUser, err := u.userRepo.FindByID(targetUserID)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return ErrUserNotFound
-		}
-		return err
+	users, err := u.authClient.GetUsers(token, []uint{targetUserID})
+	if err != nil || len(users) == 0 {
+		return ErrUserNotFound
 	}
+	targetUser := users[0]
+
 	if targetUser.Role != "manager" {
 		return ErrGlobalManagerRequired
 	}

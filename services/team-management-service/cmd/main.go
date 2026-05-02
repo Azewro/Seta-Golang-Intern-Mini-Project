@@ -9,6 +9,7 @@ import (
 	"team-management-service/internal/middleware"
 	"team-management-service/internal/repository"
 	"team-management-service/internal/usecase"
+	"team-management-service/pkg/client"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,8 +19,8 @@ func main() {
 	config.ConnectDB()
 
 	teamRepo := repository.NewTeamRepository(config.DB)
-	userRepo := repository.NewUserRepository(config.DB)
-	teamUsecase := usecase.NewTeamUsecase(teamRepo, userRepo)
+	authClient := client.NewAuthClient()
+	teamUsecase := usecase.NewTeamUsecase(teamRepo, authClient)
 	teamHandler := handler.NewTeamHandler(teamUsecase)
 
 	r := gin.Default()
@@ -34,7 +35,7 @@ func main() {
 	api := r.Group("/api/v1")
 	{
 		protected := api.Group("/")
-		protected.Use(middleware.AuthRequired())
+		protected.Use(middleware.AuthRequired(authClient))
 		{
 			teams := protected.Group("/teams")
 			{
@@ -64,3 +65,4 @@ func main() {
 		log.Fatalf("Server failed to start: %v", err)
 	}
 }
+

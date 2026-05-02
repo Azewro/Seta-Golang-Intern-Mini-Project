@@ -138,11 +138,16 @@ func (u *authUsecaseImpl) Register(req *RegisterRequest) (*domain.User, error) {
 		return nil, err
 	}
 
+	role := req.Role
+	if role == "" {
+		role = "member"
+	}
+
 	user := &domain.User{
 		Username:   req.Username,
 		Email:      req.Email,
 		Password:   hashedPassword,
-		Role:       "member", // Force role to member upon registration
+		Role:       role,
 		IsVerified: false,
 	}
 
