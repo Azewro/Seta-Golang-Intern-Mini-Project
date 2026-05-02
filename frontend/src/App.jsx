@@ -2,9 +2,10 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ProfilePage from "./pages/ProfilePage";
 import UsersPage from "./pages/UsersPage";
+import TeamsPage from "./pages/TeamsPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import ManagerRoute from "./routes/ManagerRoute";
@@ -47,6 +48,15 @@ export default function App() {
               <ManagerRoute>
                 <UsersPage />
               </ManagerRoute>
+            }
+          />
+
+          <Route
+            path="/teams"
+            element={
+              <ProtectedRoute>
+                <TeamsPage />
+              </ProtectedRoute>
             }
           />
 

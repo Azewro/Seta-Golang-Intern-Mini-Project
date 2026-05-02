@@ -11,6 +11,7 @@ export default function RegisterPage() {
     username: "",
     email: "",
     password: "",
+    role: "member",
   });
   const [touched, setTouched] = useState({
     username: false,
@@ -58,17 +59,25 @@ export default function RegisterPage() {
   return (
     <section className="auth-layout">
       <aside className="auth-hero">
-        <p className="auth-kicker">Member Onboarding</p>
+        <p className="auth-kicker">User Onboarding</p>
         <h2>Create Account</h2>
         <p>
-          Register as a member account, then verify your email link to activate secure login access.
+          Register your account, then verify your email link to activate secure login access. Choose your capability role below.
         </p>
       </aside>
 
       <section className="card auth-card">
         <h2>Register</h2>
-        <p className="muted page-lead">Your role is assigned as member at sign-up.</p>
+        <p className="muted page-lead">Select your account capability.</p>
         <form className="form-grid" onSubmit={onSubmit}>
+          <select
+            value={form.role}
+            onChange={(e) => onChange("role", e.target.value)}
+            className="input-select"
+          >
+            <option value="member">Member (Read-only Team Access)</option>
+            <option value="manager">Manager (Can Create/Manage Teams)</option>
+          </select>
           <input
             type="text"
             placeholder="Username"

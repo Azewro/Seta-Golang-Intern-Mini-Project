@@ -11,8 +11,9 @@ type UserRepository interface {
 	CreateUser(user *domain.User) error
 	FindByEmail(email string) (*domain.User, error)
 	FindByID(id uint) (*domain.User, error)
-	ListUsers(offset int, limit int) ([]domain.User, error)
+	FindUsersByIDs(ids []uint) ([]domain.User, error)
 	MarkUserVerified(id uint) error
+	ListUsers(offset int, limit int) ([]domain.User, error)
 }
 
 type userRepositoryImpl struct {
@@ -31,10 +32,7 @@ func (r *userRepositoryImpl) CreateUser(user *domain.User) error {
 func (r *userRepositoryImpl) FindByEmail(email string) (*domain.User, error) {
 	var user domain.User
 	err := r.db.Where("email = ?", email).First(&user).Error
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
+	return &user, err
 }
 
 func (r *userRepositoryImpl) FindByID(id uint) (*domain.User, error) {
@@ -59,4 +57,13 @@ func (r *userRepositoryImpl) MarkUserVerified(id uint) error {
 	return r.db.Model(&domain.User{}).Where("id = ?", id).Updates(map[string]any{
 		"is_verified": true,
 	}).Error
+}
+
+func (r *userRepositoryImpl) FindUsersByIDs(ids []uint) ([]domain.User, error) {
+	var users []domain.User
+	if len(ids) == 0 {
+		return users, nil
+	}
+	err := r.db.Where("id IN ?", ids).Find(&users).Error
+	return users, err
 }

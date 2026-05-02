@@ -146,6 +146,52 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }
 
+// Me (GET /api/v1/users/me) authenticated only
+func (h *AuthHandler) Me(c *gin.Context) {
+	userIDValue, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing user context"})
+		return
+	}
+
+	userID, ok := userIDValue.(uint)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
+		return
+	}
+
+	profile, err := h.authUsecase.GetMyProfile(userID)
+	if err != nil {
+		if errors.Is(err, usecase.ErrUserNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch profile"})
+		return
+	}
+
+	c.JSON(http.StatusOK, profile)
+}
+
+// BulkGetUsers (POST /api/v1/users/batch) authenticated only
+func (h *AuthHandler) BulkGetUsers(c *gin.Context) {
+	var req struct {
+		UserIDs []uint `json:"userIds" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	users, err := h.authUsecase.GetUsersByIDs(req.UserIDs)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch users"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": users})
+}
+
 // ListUsers (GET /api/v1/users) manager only
 func (h *AuthHandler) ListUsers(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -162,31 +208,4 @@ func (h *AuthHandler) ListUsers(c *gin.Context) {
 		"limit": limit,
 		"data":  users,
 	})
-}
-
-// Me (GET /api/v1/users/me)
-func (h *AuthHandler) Me(c *gin.Context) {
-	userIDValue, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "missing user context"})
-		return
-	}
-
-	userID, ok := userIDValue.(uint)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid user context"})
-		return
-	}
-
-	me, err := h.authUsecase.GetMyProfile(userID)
-	if err != nil {
-		if errors.Is(err, usecase.ErrUserNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch profile"})
-		return
-	}
-
-	c.JSON(http.StatusOK, me)
 }

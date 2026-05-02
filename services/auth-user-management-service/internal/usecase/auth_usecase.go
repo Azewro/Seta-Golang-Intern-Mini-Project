@@ -31,11 +31,11 @@ var (
 )
 
 // RegisterRequest defines the input payload for user registration.
-// Public sign-up follows role model A: new users are always created as member.
 type RegisterRequest struct {
 	Username string `json:"username" binding:"required"`
 	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
+	Password string `json:"password" binding:"required,min=8"`
+	Role     string `json:"role" binding:"omitempty,oneof=manager member"`
 }
 
 // LoginRequest defines the input payload for user login.
@@ -76,6 +76,7 @@ type AuthUsecase interface {
 	Logout(tokenID string) error
 	ListUsers(page int, limit int) ([]UserResponse, error)
 	GetMyProfile(userID uint) (*UserResponse, error)
+	GetUsersByIDs(ids []uint) ([]UserResponse, error)
 }
 
 type authUsecaseImpl struct {
@@ -137,23 +138,23 @@ func (u *authUsecaseImpl) Register(req *RegisterRequest) (*domain.User, error) {
 		return nil, err
 	}
 
-	newUser := &domain.User{
+	user := &domain.User{
 		Username:   req.Username,
 		Email:      req.Email,
 		Password:   hashedPassword,
-		Role:       "member",
+		Role:       "member", // Force role to member upon registration
 		IsVerified: false,
 	}
 
-	if err := u.userRepo.CreateUser(newUser); err != nil {
+	if err := u.userRepo.CreateUser(user); err != nil {
 		return nil, err
 	}
 
-	if err := u.issueVerification(newUser); err != nil {
+	if err := u.issueVerification(user); err != nil {
 		return nil, err
 	}
 
-	return newUser, nil
+	return user, nil
 }
 
 func (u *authUsecaseImpl) VerifyEmail(rawToken string) error {
@@ -288,6 +289,20 @@ func (u *authUsecaseImpl) GetMyProfile(userID uint) (*UserResponse, error) {
 
 	response := toUserResponse(user)
 	return &response, nil
+}
+
+func (u *authUsecaseImpl) GetUsersByIDs(ids []uint) ([]UserResponse, error) {
+	users, err := u.userRepo.FindUsersByIDs(ids)
+	if err != nil {
+		return nil, err
+	}
+
+	response := make([]UserResponse, 0, len(users))
+	for i := range users {
+		response = append(response, toUserResponse(&users[i]))
+	}
+
+	return response, nil
 }
 
 func (u *authUsecaseImpl) issueVerification(user *domain.User) error {

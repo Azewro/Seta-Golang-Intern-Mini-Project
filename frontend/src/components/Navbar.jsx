@@ -41,10 +41,19 @@ export default function Navbar() {
 
           {isAuthenticated && (
             <>
-              <NavLink className={navClassName} to="/profile">
-                My Profile
+              <NavLink
+                to="/profile"
+                className={({ isActive }) => `nav-link ${isActive ? "nav-link-active" : ""}`}
+              >
+                Profile
               </NavLink>
-              {user?.role === "manager" && (
+              <NavLink
+                to="/teams"
+                className={({ isActive }) => `nav-link ${isActive ? "nav-link-active" : ""}`}
+              >
+                Teams
+              </NavLink>
+              {user.role === "manager" && (
                 <NavLink className={navClassName} to="/users">
                   Users
                 </NavLink>

@@ -68,8 +68,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## Frontend Design Source of Truth (MUST)
 When working on any frontend task, you MUST:
-1. Read `.github/idea for front end.md` first.
-2. Read `.github/anthropics-frontend-design-SKILL.md` second for specific design guidelines.
-3. Follow its color, typography, spacing, component, and interaction rules.
-4. Do not introduce styles that conflict with that design system unless user explicitly requests.
-5. In every frontend change report, state which rules from that file were applied.
+1. Read `.github/anthropics-frontend-design-SKILL.md` first.
+2. Follow its color, typography, spacing, component, and interaction rules.
+3. Do not introduce styles that conflict with that design system unless user explicitly requests.
+4. In every frontend change report, state which rules from that file were applied.

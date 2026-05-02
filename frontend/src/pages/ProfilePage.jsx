@@ -22,10 +22,6 @@ export default function ProfilePage() {
       
       <div className="profile-grid">
         <div className="profile-row">
-          <strong>Account ID</strong>
-          <span style={{ fontFamily: 'monospace', opacity: 0.8 }}>#{user?.userId}</span>
-        </div>
-        <div className="profile-row">
           <strong>Username</strong>
           <span>{user?.username}</span>
         </div>
@@ -37,14 +33,7 @@ export default function ProfilePage() {
           <strong>Workspace Role</strong>
           <span className={`badge badge-${user?.role}`}>{user?.role}</span>
         </div>
-        <div className="profile-row">
-          <strong>Verification Status</strong>
-          <span className={user?.isVerified ? "text-accent" : "text-danger"}>
-            {user?.isVerified ? "✓ Verified" : "⚠ Pending verification"}
-          </span>
-        </div>
       </div>
     </section>
   );
 }
-

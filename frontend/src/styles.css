@@ -166,15 +166,18 @@ a:hover {
 }
 
 .page-panel {
+  width: 100%;
   max-width: 1080px;
   margin: 0 auto;
 }
 
 .profile-panel {
+  width: 100%;
   max-width: 800px;
 }
 
 .users-panel {
+  width: 100%;
   min-height: 60vh;
 }
 

@@ -67,6 +67,7 @@ func main() {
 		{
 			protected.POST("/auth/logout", authHandler.Logout)
 			protected.GET("/users/me", authHandler.Me)
+			protected.POST("/users/bulk", authHandler.BulkGetUsers) // Allow any authenticated user to resolve batch of users
 
 			manager := protected.Group("/")
 			manager.Use(middleware.ManagerOnly())
