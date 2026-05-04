@@ -5,6 +5,7 @@ import RegisterPage from "./pages/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
 import UsersPage from "./pages/UsersPage";
 import TeamsPage from "./pages/TeamsPage";
+import AssetsPage from "./pages/AssetsPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -56,6 +57,15 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <TeamsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/assets"
+            element={
+              <ProtectedRoute>
+                <AssetsPage />
               </ProtectedRoute>
             }
           />

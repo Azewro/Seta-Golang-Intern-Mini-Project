@@ -53,6 +53,12 @@ export default function Navbar() {
               >
                 Teams
               </NavLink>
+              <NavLink
+                to="/assets"
+                className={({ isActive }) => `nav-link ${isActive ? "nav-link-active" : ""}`}
+              >
+                Assets
+              </NavLink>
               {user.role === "manager" && (
                 <NavLink className={navClassName} to="/users">
                   Users
