@@ -5,13 +5,34 @@ import (
 	"os"
 
 	"auth-user-management-service/config"
+	_ "auth-user-management-service/docs"
 	"auth-user-management-service/internal/handler"
 	"auth-user-management-service/internal/middleware"
 	"auth-user-management-service/internal/repository"
 	"auth-user-management-service/internal/usecase"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+// @title Auth & User Management Service API
+// @version 1.0
+// @description JWT authentication, optional email verification, session revocation, and user APIs. Use header Authorization: Bearer plus your access token.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name Seta Golang Intern Project
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT from POST /api/v1/auth/login (prefix with "Bearer " in Swagger UI Authorize dialog, or paste token only depending on client)
 
 func main() {
 	// Load configuration from root .env.backend (or ENV_FILE)
@@ -40,6 +61,8 @@ func main() {
 
 	// Initialize Gin App (similar to SpringApplication.run)
 	r := gin.Default()
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Health check API
 	r.GET("/health", func(c *gin.Context) {
@@ -83,6 +106,7 @@ func main() {
 	}
 
 	log.Printf("Server is starting on port http://localhost:%s\n", port)
+	log.Printf("Swagger UI: http://localhost:%s/swagger/index.html\n", port)
 
 	// Start the server
 	if err := r.Run(":" + port); err != nil {

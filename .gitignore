@@ -38,3 +38,6 @@ go.work.sum
 
 *.exe
 .env
+
+# Root tool dependencies
+/node_modules/

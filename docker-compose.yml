@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:15-alpine
@@ -14,6 +12,95 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  auth-service:
+    build:
+      context: ./services/auth-user-management-service
+      dockerfile: Dockerfile.dev
+    container_name: seta_auth_service
+    working_dir: /app
+    environment:
+      ENV_FILE: /workspace/.env.backend
+      PORT: 8080
+    volumes:
+      - ./services/auth-user-management-service:/app
+      - ./.env.backend:/workspace/.env.backend:ro
+      - go_auth_mod_cache:/go/pkg/mod
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  team-service:
+    build:
+      context: ./services/team-management-service
+      dockerfile: Dockerfile.dev
+    container_name: seta_team_service
+    working_dir: /app
+    environment:
+      ENV_FILE: /workspace/.env.backend
+      TEAM_SERVICE_PORT: 8081
+      AUTH_SERVICE_URL: http://auth-service:8080
+    volumes:
+      - ./services/team-management-service:/app
+      - ./.env.backend:/workspace/.env.backend:ro
+      - go_team_mod_cache:/go/pkg/mod
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+      - auth-service
+    restart: unless-stopped
+
+  asset-service:
+    build:
+      context: ./services/asset-management-service
+      dockerfile: Dockerfile.dev
+    container_name: seta_asset_service
+    working_dir: /app
+    environment:
+      ENV_FILE: /workspace/.env.backend
+      ASSET_SERVICE_PORT: 8082
+      AUTH_SERVICE_URL: http://auth-service:8080
+      TEAM_SERVICE_URL: http://team-service:8081
+    volumes:
+      - ./services/asset-management-service:/app
+      - ./.env.backend:/workspace/.env.backend:ro
+      - go_asset_mod_cache:/go/pkg/mod
+    ports:
+      - "8082:8082"
+    depends_on:
+      - db
+      - auth-service
+      - team-service
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: seta_frontend
+    working_dir: /workspace/frontend
+    environment:
+      VITE_API_BASE_URL: http://auth-service:8080
+      VITE_TEAM_API_BASE_URL: http://team-service:8081
+      VITE_ASSET_API_BASE_URL: http://asset-service:8082
+    volumes:
+      - ./frontend:/workspace/frontend
+      - ./.env.frontend:/workspace/.env.frontend:ro
+      - frontend_node_modules:/workspace/frontend/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - auth-service
+      - team-service
+      - asset-service
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  go_auth_mod_cache:
+  go_team_mod_cache:
+  go_asset_mod_cache:
+  frontend_node_modules:
 

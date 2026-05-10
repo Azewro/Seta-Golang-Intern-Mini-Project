@@ -1,0 +1,369 @@
+basePath: /
+definitions:
+  handler.bulkUsersResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/usecase.UserResponse'
+        type: array
+    type: object
+  handler.errorJSON:
+    properties:
+      error:
+        type: string
+    type: object
+  handler.listUsersResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/usecase.UserResponse'
+        type: array
+      limit:
+        type: integer
+      page:
+        type: integer
+    type: object
+  handler.messageJSON:
+    properties:
+      message:
+        type: string
+    type: object
+  handler.registerCreatedResponse:
+    properties:
+      message:
+        type: string
+      user:
+        $ref: '#/definitions/usecase.UserResponse'
+    type: object
+  usecase.BulkGetUsersRequest:
+    properties:
+      userIds:
+        items:
+          type: integer
+        type: array
+    required:
+    - userIds
+    type: object
+  usecase.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  usecase.LoginResponse:
+    properties:
+      accessToken:
+        type: string
+      expiresAt:
+        type: string
+      user:
+        $ref: '#/definitions/usecase.UserResponse'
+    type: object
+  usecase.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 8
+        type: string
+      role:
+        enum:
+        - manager
+        - member
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  usecase.ResendVerificationRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  usecase.UserResponse:
+    properties:
+      createdAt:
+        type: string
+      email:
+        type: string
+      isVerified:
+        type: boolean
+      role:
+        type: string
+      updatedAt:
+        type: string
+      userId:
+        type: integer
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    name: Seta Golang Intern Project
+  description: 'JWT authentication, optional email verification, session revocation,
+    and user APIs. Use header Authorization: Bearer plus your access token.'
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Auth & User Management Service API
+  version: "1.0"
+paths:
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/usecase.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/usecase.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+      summary: Login
+      tags:
+      - auth
+  /api/v1/auth/logout:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.messageJSON'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+      security:
+      - BearerAuth: []
+      summary: Logout
+      tags:
+      - auth
+  /api/v1/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create account (role manager or member; default member). Email
+        verification flow depends on SMTP configuration.
+      parameters:
+      - description: Credentials
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/usecase.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handler.registerCreatedResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+      summary: Register
+      tags:
+      - auth
+  /api/v1/auth/resend-verification:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Email
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/usecase.ResendVerificationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.messageJSON'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+      summary: Resend verification email
+      tags:
+      - auth
+  /api/v1/auth/verify-email:
+    get:
+      parameters:
+      - description: Verification token from email link
+        in: query
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.messageJSON'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+      summary: Verify email
+      tags:
+      - auth
+  /api/v1/users:
+    get:
+      description: Requires global role manager.
+      parameters:
+      - default: 1
+        description: Page
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.listUsersResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+      security:
+      - BearerAuth: []
+      summary: List users
+      tags:
+      - users
+  /api/v1/users/bulk:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: User IDs
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/usecase.BulkGetUsersRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.bulkUsersResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+      security:
+      - BearerAuth: []
+      summary: Bulk get users
+      tags:
+      - users
+  /api/v1/users/me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/usecase.UserResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorJSON'
+      security:
+      - BearerAuth: []
+      summary: Current user
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    description: JWT from POST /api/v1/auth/login (prefix with "Bearer " in Swagger
+      UI Authorize dialog, or paste token only depending on client)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -1,0 +1,18 @@
+{
+  "name": "seta-golang-intern-mini-project",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev:all": "concurrently -k -n AUTH,TEAM,ASSET,WEB -c blue,green,magenta,cyan \"npm run dev:auth\" \"npm run dev:team\" \"npm run dev:asset\" \"npm run dev:frontend\"",
+    "dev:auth": "cd services/auth-user-management-service && go run ./cmd/main.go",
+    "dev:team": "cd services/team-management-service && go run ./cmd/main.go",
+    "dev:asset": "cd services/asset-management-service && go run ./cmd/main.go",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

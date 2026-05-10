@@ -1,76 +1,151 @@
 # Auth User Management Service
 
-Stage 1 implementation for authentication and user management.
+## Introduction
 
-## Features
+This service is the identity backbone of the project.  
+It is responsible for user registration, email verification, authentication, session revocation, and role-aware user listing for manager workflows.
 
-- Register user (public sign-up creates `member` role)
-- Email verification via SMTP link (token expires in 5 minutes)
-- Resend verification email endpoint
-- Login with JWT token generation (only for verified accounts)
-- Logout with real token revocation via `sessions` table
-- View own profile (`/users/me`)
-- Manager-only user list (`/users`)
+## Tech Stack
 
-## Environment
+- Go
+- Gin (HTTP routing and middleware)
+- GORM + PostgreSQL
+- JWT for access token transport
+- SMTP-based email verification flow
 
-Use the root backend env file:
+## Requirements
+
+- Go `1.24+` (module target: `1.26.2`)
+- PostgreSQL running and reachable from `DB_*` variables
+- Root `.env.backend` file
+- Optional SMTP credentials for full registration verification flow
+
+## Project Structure
+
+```text
+auth-user-management-service/
+├─ cmd/
+│  └─ main.go
+├─ config/
+├─ internal/
+│  ├─ domain/
+│  ├─ repository/
+│  ├─ usecase/
+│  ├─ handler/
+│  └─ middleware/
+├─ docs/
+│  ├─ docs.go
+│  ├─ swagger.json
+│  └─ swagger.yaml
+├─ pkg/
+│  └─ utils/
+├─ go.mod
+└─ README.md
+```
+
+## Dependencies
+
+Core dependencies from [go.mod](go.mod):
+
+- `github.com/gin-gonic/gin`
+- `gorm.io/gorm`
+- `gorm.io/driver/postgres`
+- `github.com/joho/godotenv`
+- `github.com/golang-jwt/jwt/v5`
+- `github.com/google/uuid`
+- `github.com/swaggo/swag`, `github.com/swaggo/gin-swagger`, `github.com/swaggo/files`
+
+## API Documentation
+
+Base URL: `http://localhost:8080`  
+Base path: `/api/v1`
+
+### Swagger UI
+
+Interactive OpenAPI (Swagger 2): `http://localhost:8080/swagger/index.html`  
+Regenerate `docs/` after editing `// @Summary` / `@Router` comments on handlers:
 
 ```powershell
-Set-Location "C:\Users\admin\Downloads\Seta-Golang-Intern-Mini-Project"
-# Edit .env.backend with your values
+swag init -g main.go -o docs --parseInternal -d ./cmd,./internal/handler,./internal/usecase
 ```
 
-Required keys:
+### Health
 
-```env
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=password
-DB_NAME=seta_miniproject_db
-PORT=8080
-APP_BASE_URL=http://localhost:8080
-JWT_SECRET=super-secret-key-for-jwt
-JWT_EXPIRES_HOURS=24
-EMAIL_VERIFY_TOKEN_TTL_MINUTES=5
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=your-email@example.com
-SMTP_PASSWORD=your-app-password
-SMTP_FROM_EMAIL=your-email@example.com
-SMTP_FROM_NAME=Seta App
+- `GET /health`
+
+### Auth Endpoints
+
+- `POST /auth/register`
+- `GET /auth/verify-email`
+- `POST /auth/resend-verification`
+- `POST /auth/login`
+- `POST /auth/logout` (authenticated)
+
+### User Endpoints
+
+- `GET /users/me` (authenticated)
+- `POST /users/bulk` (authenticated, internal cross-service lookup)
+- `GET /users` (manager-only)
+
+## Authorization Model
+
+- Token parsing and session validity are enforced by auth middleware.
+- `manager` role is required for `GET /users`.
+- `POST /users/bulk` is intentionally available to authenticated callers for internal service-to-service workflows (for example team/asset lookups).
+
+## Error Handling
+
+- Uses HTTP status semantics (`400`, `401`, `403`, `404`, `409`, `500`).
+- Usecase-level typed errors are mapped in handlers for stable client-facing responses.
+
+## Architecture Overview
+
+```mermaid
+flowchart LR
+  Client["Client or Service"] --> AuthApi["Auth API (Gin)"]
+  AuthApi --> AuthMiddleware["AuthRequired + ManagerOnly"]
+  AuthApi --> Usecase["Auth Usecase"]
+  Usecase --> UserRepo["User Repository"]
+  Usecase --> SessionRepo["Session Repository"]
+  Usecase --> VerifyRepo["Email Verification Repository"]
+  UserRepo --> Postgres["PostgreSQL"]
+  SessionRepo --> Postgres
+  VerifyRepo --> Postgres
+  Usecase --> SMTP["SMTP Provider"]
 ```
 
-## Run
+## Run and Development Guide
+
+From this directory:
 
 ```powershell
 go mod tidy
 go run ./cmd/main.go
 ```
 
-## Quick API test
+Service port:
+
+- `PORT` env value (default `8080`)
+
+Run tests:
 
 ```powershell
-# Register (role is assigned as member on server)
-curl -Method POST "http://localhost:8080/api/v1/auth/register" -ContentType "application/json" -Body '{"username":"user1","email":"user1@example.com","password":"password123"}'
-
-# Verify from email link (example)
-curl -Method GET "http://localhost:8080/api/v1/auth/verify-email?token=<token-from-email>"
-
-# Resend verification email
-curl -Method POST "http://localhost:8080/api/v1/auth/resend-verification" -ContentType "application/json" -Body '{"email":"user1@example.com"}'
-
-# Login
-$login = curl -Method POST "http://localhost:8080/api/v1/auth/login" -ContentType "application/json" -Body '{"email":"admin@example.com","password":"password123"}'
-$token = ($login.Content | ConvertFrom-Json).accessToken
-
-# Manager list users
-curl -Method GET "http://localhost:8080/api/v1/users" -Headers @{ Authorization = "Bearer $token" }
-
-# Me
-curl -Method GET "http://localhost:8080/api/v1/users/me" -Headers @{ Authorization = "Bearer $token" }
-
-# Logout
-curl -Method POST "http://localhost:8080/api/v1/auth/logout" -Headers @{ Authorization = "Bearer $token" }
+go test ./...
 ```
+
+## Environment
+
+Main required keys in root `.env.backend`:
+
+- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
+- `PORT`
+- `APP_BASE_URL`
+- `JWT_SECRET`, `JWT_EXPIRES_HOURS`
+- `EMAIL_VERIFY_TOKEN_TTL_MINUTES`
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL`, `SMTP_FROM_NAME`
+
+## Current Status
+
+- Stage 1 requirements for auth/user management are implemented.
+- Service is actively used by Team and Asset services for token/user resolution.
+- Future hardening areas: stricter observability, test depth, and import/concurrency features from later stages.

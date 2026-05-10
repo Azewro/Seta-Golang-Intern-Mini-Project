@@ -18,6 +18,18 @@ func NewAssetHandler(assetUsecase usecase.AssetUsecase) *AssetHandler {
 	return &AssetHandler{assetUsecase: assetUsecase}
 }
 
+// CreateFolder godoc
+// @Summary Create folder
+// @Tags folders
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param body body usecase.CreateFolderRequest true "Folder name"
+// @Success 201 {object} usecase.FolderResponse
+// @Failure 400 {object} errBody
+// @Failure 403 {object} errBody
+// @Failure 500 {object} errBody
+// @Router /api/v1/folders [post]
 func (h *AssetHandler) CreateFolder(c *gin.Context) {
 	userID, _, _, ok := getActorContext(c)
 	if !ok {
@@ -38,6 +50,16 @@ func (h *AssetHandler) CreateFolder(c *gin.Context) {
 	c.JSON(http.StatusCreated, folder)
 }
 
+// ListFolders godoc
+// @Summary List folders
+// @Tags folders
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} foldersListBody
+// @Failure 401 {object} errBody
+// @Failure 403 {object} errBody
+// @Failure 500 {object} errBody
+// @Router /api/v1/folders [get]
 func (h *AssetHandler) ListFolders(c *gin.Context) {
 	userID, role, token, ok := getActorContext(c)
 	if !ok {
@@ -52,6 +74,18 @@ func (h *AssetHandler) ListFolders(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": folders})
 }
 
+// GetFolder godoc
+// @Summary Get folder
+// @Tags folders
+// @Security BearerAuth
+// @Produce json
+// @Param folderId path int true "Folder ID"
+// @Success 200 {object} usecase.FolderResponse
+// @Failure 400 {object} errBody
+// @Failure 403 {object} errBody
+// @Failure 404 {object} errBody
+// @Failure 500 {object} errBody
+// @Router /api/v1/folders/{folderId} [get]
 func (h *AssetHandler) GetFolder(c *gin.Context) {
 	userID, role, token, ok := getActorContext(c)
 	if !ok {
@@ -72,6 +106,20 @@ func (h *AssetHandler) GetFolder(c *gin.Context) {
 	c.JSON(http.StatusOK, folder)
 }
 
+// UpdateFolder godoc
+// @Summary Update folder
+// @Tags folders
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param folderId path int true "Folder ID"
+// @Param body body usecase.UpdateFolderRequest true "New name"
+// @Success 200 {object} usecase.FolderResponse
+// @Failure 400 {object} errBody
+// @Failure 403 {object} errBody
+// @Failure 404 {object} errBody
+// @Failure 500 {object} errBody
+// @Router /api/v1/folders/{folderId} [patch]
 func (h *AssetHandler) UpdateFolder(c *gin.Context) {
 	userID, role, token, ok := getActorContext(c)
 	if !ok {
@@ -98,6 +146,18 @@ func (h *AssetHandler) UpdateFolder(c *gin.Context) {
 	c.JSON(http.StatusOK, folder)
 }
 
+// DeleteFolder godoc
+// @Summary Delete folder
+// @Tags folders
+// @Security BearerAuth
+// @Produce json
+// @Param folderId path int true "Folder ID"
+// @Success 200 {object} msgBody
+// @Failure 400 {object} errBody
+// @Failure 403 {object} errBody
+// @Failure 404 {object} errBody
+// @Failure 500 {object} errBody
+// @Router /api/v1/folders/{folderId} [delete]
 func (h *AssetHandler) DeleteFolder(c *gin.Context) {
 	userID, role, token, ok := getActorContext(c)
 	if !ok {
@@ -117,6 +177,20 @@ func (h *AssetHandler) DeleteFolder(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Folder deleted"})
 }
 
+// CreateNote godoc
+// @Summary Create note
+// @Tags notes
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param folderId path int true "Folder ID"
+// @Param body body usecase.CreateNoteRequest true "Note"
+// @Success 201 {object} usecase.NoteResponse
+// @Failure 400 {object} errBody
+// @Failure 403 {object} errBody
+// @Failure 404 {object} errBody
+// @Failure 500 {object} errBody
+// @Router /api/v1/folders/{folderId}/notes [post]
 func (h *AssetHandler) CreateNote(c *gin.Context) {
 	userID, role, token, ok := getActorContext(c)
 	if !ok {
@@ -143,6 +217,18 @@ func (h *AssetHandler) CreateNote(c *gin.Context) {
 	c.JSON(http.StatusCreated, note)
 }
 
+// ListNotesByFolder godoc
+// @Summary List notes in folder
+// @Tags notes
+// @Security BearerAuth
+// @Produce json
+// @Param folderId path int true "Folder ID"
+// @Success 200 {object} notesListBody
+// @Failure 400 {object} errBody
+// @Failure 403 {object} errBody
+// @Failure 404 {object} errBody
+// @Failure 500 {object} errBody
+// @Router /api/v1/folders/{folderId}/notes [get]
 func (h *AssetHandler) ListNotesByFolder(c *gin.Context) {
 	userID, role, token, ok := getActorContext(c)
 	if !ok {
@@ -163,6 +249,18 @@ func (h *AssetHandler) ListNotesByFolder(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": notes})
 }
 
+// GetNote godoc
+// @Summary Get note
+// @Tags notes
+// @Security BearerAuth
+// @Produce json
+// @Param noteId path int true "Note ID"
+// @Success 200 {object} usecase.NoteResponse
+// @Failure 400 {object} errBody
+// @Failure 403 {object} errBody
+// @Failure 404 {object} errBody
+// @Failure 500 {object} errBody
+// @Router /api/v1/notes/{noteId} [get]
 func (h *AssetHandler) GetNote(c *gin.Context) {
 	userID, role, token, ok := getActorContext(c)
 	if !ok {
@@ -183,6 +281,20 @@ func (h *AssetHandler) GetNote(c *gin.Context) {
 	c.JSON(http.StatusOK, note)
 }
 
+// UpdateNote godoc
+// @Summary Update note
+// @Tags notes
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param noteId path int true "Note ID"
+// @Param body body usecase.UpdateNoteRequest true "Note fields"
+// @Success 200 {object} usecase.NoteResponse
+// @Failure 400 {object} errBody
+// @Failure 403 {object} errBody
+// @Failure 404 {object} errBody
+// @Failure 500 {object} errBody
+// @Router /api/v1/notes/{noteId} [patch]
 func (h *AssetHandler) UpdateNote(c *gin.Context) {
 	userID, role, token, ok := getActorContext(c)
 	if !ok {
@@ -209,6 +321,18 @@ func (h *AssetHandler) UpdateNote(c *gin.Context) {
 	c.JSON(http.StatusOK, note)
 }
 
+// DeleteNote godoc
+// @Summary Delete note
+// @Tags notes
+// @Security BearerAuth
+// @Produce json
+// @Param noteId path int true "Note ID"
+// @Success 200 {object} msgBody
+// @Failure 400 {object} errBody
+// @Failure 403 {object} errBody
+// @Failure 404 {object} errBody
+// @Failure 500 {object} errBody
+// @Router /api/v1/notes/{noteId} [delete]
 func (h *AssetHandler) DeleteNote(c *gin.Context) {
 	userID, role, token, ok := getActorContext(c)
 	if !ok {
@@ -228,6 +352,19 @@ func (h *AssetHandler) DeleteNote(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Note deleted"})
 }
 
+// ShareAsset godoc
+// @Summary Share folder or note
+// @Tags shares
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param body body usecase.ShareAssetRequest true "Share payload"
+// @Success 200 {object} usecase.ShareResponse
+// @Failure 400 {object} errBody
+// @Failure 403 {object} errBody
+// @Failure 404 {object} errBody
+// @Failure 500 {object} errBody
+// @Router /api/v1/shares [post]
 func (h *AssetHandler) ShareAsset(c *gin.Context) {
 	userID, role, token, ok := getActorContext(c)
 	if !ok {
@@ -248,6 +385,18 @@ func (h *AssetHandler) ShareAsset(c *gin.Context) {
 	c.JSON(http.StatusOK, share)
 }
 
+// RevokeShare godoc
+// @Summary Revoke share
+// @Tags shares
+// @Security BearerAuth
+// @Produce json
+// @Param shareId path int true "Share ID"
+// @Success 200 {object} msgBody
+// @Failure 400 {object} errBody
+// @Failure 403 {object} errBody
+// @Failure 404 {object} errBody
+// @Failure 500 {object} errBody
+// @Router /api/v1/shares/{shareId} [delete]
 func (h *AssetHandler) RevokeShare(c *gin.Context) {
 	userID, role, token, ok := getActorContext(c)
 	if !ok {
@@ -267,6 +416,15 @@ func (h *AssetHandler) RevokeShare(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Share revoked"})
 }
 
+// ListReceivedShares godoc
+// @Summary Shares received by me
+// @Tags shares
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} sharesListBody
+// @Failure 401 {object} errBody
+// @Failure 500 {object} errBody
+// @Router /api/v1/shares/received [get]
 func (h *AssetHandler) ListReceivedShares(c *gin.Context) {
 	userID, _, _, ok := getActorContext(c)
 	if !ok {
@@ -281,6 +439,15 @@ func (h *AssetHandler) ListReceivedShares(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": shares})
 }
 
+// ListGrantedShares godoc
+// @Summary Shares granted by me
+// @Tags shares
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} sharesListBody
+// @Failure 401 {object} errBody
+// @Failure 500 {object} errBody
+// @Router /api/v1/shares/granted [get]
 func (h *AssetHandler) ListGrantedShares(c *gin.Context) {
 	userID, _, _, ok := getActorContext(c)
 	if !ok {
@@ -353,4 +520,24 @@ func getActorContext(c *gin.Context) (uint, string, string, bool) {
 	}
 
 	return userID, role, token, true
+}
+
+type foldersListBody struct {
+	Data []usecase.FolderResponse `json:"data"`
+}
+
+type notesListBody struct {
+	Data []usecase.NoteResponse `json:"data"`
+}
+
+type sharesListBody struct {
+	Data []usecase.ShareResponse `json:"data"`
+}
+
+type msgBody struct {
+	Message string `json:"message"`
+}
+
+type errBody struct {
+	Error string `json:"error"`
 }

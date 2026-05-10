@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	_ "asset-management-service/docs"
 	"asset-management-service/config"
 	"asset-management-service/internal/handler"
 	"asset-management-service/internal/middleware"
@@ -12,7 +13,27 @@ import (
 	"asset-management-service/pkg/client"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+// @title Asset Management Service API
+// @version 1.0
+// @description Folders, notes, and sharing. JWT must be valid on the Auth service. Use Authorization: Bearer plus token.
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name Seta Golang Intern Project
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8082
+// @BasePath /
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Bearer token from Auth service
 
 func main() {
 	config.LoadEnv()
@@ -25,6 +46,8 @@ func main() {
 	assetHandler := handler.NewAssetHandler(assetUsecase)
 
 	r := gin.Default()
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -63,6 +86,7 @@ func main() {
 	}
 
 	log.Printf("Asset service is starting on port http://localhost:%s\n", port)
+	log.Printf("Swagger UI: http://localhost:%s/swagger/index.html\n", port)
 	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}

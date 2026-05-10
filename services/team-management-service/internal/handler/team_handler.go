@@ -19,6 +19,19 @@ func NewTeamHandler(teamUsecase usecase.TeamUsecase) *TeamHandler {
 	return &TeamHandler{teamUsecase: teamUsecase}
 }
 
+// CreateTeam godoc
+// @Summary Create team
+// @Description Global manager only. Creator becomes main manager.
+// @Tags teams
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param body body usecase.CreateTeamRequest true "Team name"
+// @Success 201 {object} usecase.TeamResponse
+// @Failure 400 {object} errorBody
+// @Failure 403 {object} errorBody
+// @Failure 500 {object} errorBody
+// @Router /api/v1/teams [post]
 func (h *TeamHandler) CreateTeam(c *gin.Context) {
 	userID, role, _, ok := getActorContext(c)
 	if !ok {
@@ -40,6 +53,15 @@ func (h *TeamHandler) CreateTeam(c *gin.Context) {
 	c.JSON(http.StatusCreated, team)
 }
 
+// ListMyTeams godoc
+// @Summary List my teams
+// @Tags teams
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} teamsListBody
+// @Failure 401 {object} errorBody
+// @Failure 500 {object} errorBody
+// @Router /api/v1/teams/my [get]
 func (h *TeamHandler) ListMyTeams(c *gin.Context) {
 	userID, _, _, ok := getActorContext(c)
 	if !ok {
@@ -55,6 +77,18 @@ func (h *TeamHandler) ListMyTeams(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": teams})
 }
 
+// GetTeam godoc
+// @Summary Get team
+// @Tags teams
+// @Security BearerAuth
+// @Produce json
+// @Param teamId path int true "Team ID"
+// @Success 200 {object} usecase.TeamResponse
+// @Failure 400 {object} errorBody
+// @Failure 403 {object} errorBody
+// @Failure 404 {object} errorBody
+// @Failure 500 {object} errorBody
+// @Router /api/v1/teams/{teamId} [get]
 func (h *TeamHandler) GetTeam(c *gin.Context) {
 	userID, _, _, ok := getActorContext(c)
 	if !ok {
@@ -76,10 +110,38 @@ func (h *TeamHandler) GetTeam(c *gin.Context) {
 	c.JSON(http.StatusOK, team)
 }
 
+// AddMember godoc
+// @Summary Add member
+// @Tags teams
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param teamId path int true "Team ID"
+// @Param body body usecase.TeamActionRequest true "Target user"
+// @Success 200 {object} messageBody
+// @Failure 400 {object} errorBody
+// @Failure 403 {object} errorBody
+// @Failure 404 {object} errorBody
+// @Failure 409 {object} errorBody
+// @Failure 500 {object} errorBody
+// @Router /api/v1/teams/{teamId}/members [post]
 func (h *TeamHandler) AddMember(c *gin.Context) {
 	h.handleTeamAction(c, h.teamUsecase.AddMember, "Member added")
 }
 
+// RemoveMember godoc
+// @Summary Remove member
+// @Tags teams
+// @Security BearerAuth
+// @Produce json
+// @Param teamId path int true "Team ID"
+// @Param userId path int true "User ID"
+// @Success 200 {object} messageBody
+// @Failure 400 {object} errorBody
+// @Failure 403 {object} errorBody
+// @Failure 404 {object} errorBody
+// @Failure 500 {object} errorBody
+// @Router /api/v1/teams/{teamId}/members/{userId} [delete]
 func (h *TeamHandler) RemoveMember(c *gin.Context) {
 	userID, role, _, ok := getActorContext(c)
 	if !ok {
@@ -105,10 +167,37 @@ func (h *TeamHandler) RemoveMember(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Member removed"})
 }
 
+// AddManager godoc
+// @Summary Add manager
+// @Tags teams
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param teamId path int true "Team ID"
+// @Param body body usecase.TeamActionRequest true "Target user (must be global manager)"
+// @Success 200 {object} messageBody
+// @Failure 400 {object} errorBody
+// @Failure 403 {object} errorBody
+// @Failure 404 {object} errorBody
+// @Failure 500 {object} errorBody
+// @Router /api/v1/teams/{teamId}/managers [post]
 func (h *TeamHandler) AddManager(c *gin.Context) {
 	h.handleTeamAction(c, h.teamUsecase.AddManager, "Manager added")
 }
 
+// RemoveManager godoc
+// @Summary Remove manager
+// @Tags teams
+// @Security BearerAuth
+// @Produce json
+// @Param teamId path int true "Team ID"
+// @Param userId path int true "User ID"
+// @Success 200 {object} messageBody
+// @Failure 400 {object} errorBody
+// @Failure 403 {object} errorBody
+// @Failure 404 {object} errorBody
+// @Failure 500 {object} errorBody
+// @Router /api/v1/teams/{teamId}/managers/{userId} [delete]
 func (h *TeamHandler) RemoveManager(c *gin.Context) {
 	userID, role, _, ok := getActorContext(c)
 	if !ok {
@@ -222,4 +311,17 @@ func getActorContext(c *gin.Context) (uint, string, string, bool) {
 	}
 
 	return userID, role, token, true
+}
+
+// Swagger-only DTOs
+type teamsListBody struct {
+	Data []usecase.TeamResponse `json:"data"`
+}
+
+type messageBody struct {
+	Message string `json:"message"`
+}
+
+type errorBody struct {
+	Error string `json:"error"`
 }

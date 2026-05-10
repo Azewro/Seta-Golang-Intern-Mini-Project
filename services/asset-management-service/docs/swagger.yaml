@@ -1,0 +1,644 @@
+basePath: /
+definitions:
+  handler.errBody:
+    properties:
+      error:
+        type: string
+    type: object
+  handler.foldersListBody:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/usecase.FolderResponse'
+        type: array
+    type: object
+  handler.msgBody:
+    properties:
+      message:
+        type: string
+    type: object
+  handler.notesListBody:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/usecase.NoteResponse'
+        type: array
+    type: object
+  handler.sharesListBody:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/usecase.ShareResponse'
+        type: array
+    type: object
+  usecase.CreateFolderRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  usecase.CreateNoteRequest:
+    properties:
+      content:
+        type: string
+      title:
+        type: string
+    required:
+    - title
+    type: object
+  usecase.FolderResponse:
+    properties:
+      accessLevel:
+        type: string
+      canWrite:
+        type: boolean
+      createdAt:
+        type: string
+      folderId:
+        type: integer
+      name:
+        type: string
+      ownerUserId:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  usecase.NoteResponse:
+    properties:
+      accessLevel:
+        type: string
+      canWrite:
+        type: boolean
+      content:
+        type: string
+      createdAt:
+        type: string
+      folderId:
+        type: integer
+      noteId:
+        type: integer
+      ownerUserId:
+        type: integer
+      title:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  usecase.ShareAssetRequest:
+    properties:
+      accessLevel:
+        type: string
+      assetId:
+        type: integer
+      assetType:
+        type: string
+      sharedWithUserId:
+        type: integer
+    required:
+    - accessLevel
+    - assetId
+    - assetType
+    - sharedWithUserId
+    type: object
+  usecase.ShareResponse:
+    properties:
+      accessLevel:
+        type: string
+      assetId:
+        type: integer
+      assetType:
+        type: string
+      createdAt:
+        type: string
+      shareId:
+        type: integer
+      sharedByUserId:
+        type: integer
+      sharedWithUserId:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  usecase.UpdateFolderRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  usecase.UpdateNoteRequest:
+    properties:
+      content:
+        type: string
+      title:
+        type: string
+    required:
+    - title
+    type: object
+host: localhost:8082
+info:
+  contact:
+    name: Seta Golang Intern Project
+  description: 'Folders, notes, and sharing. JWT must be valid on the Auth service.
+    Use Authorization: Bearer plus token.'
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Asset Management Service API
+  version: "1.0"
+paths:
+  /api/v1/folders:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.foldersListBody'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errBody'
+      security:
+      - BearerAuth: []
+      summary: List folders
+      tags:
+      - folders
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Folder name
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/usecase.CreateFolderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/usecase.FolderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errBody'
+      security:
+      - BearerAuth: []
+      summary: Create folder
+      tags:
+      - folders
+  /api/v1/folders/{folderId}:
+    delete:
+      parameters:
+      - description: Folder ID
+        in: path
+        name: folderId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.msgBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errBody'
+      security:
+      - BearerAuth: []
+      summary: Delete folder
+      tags:
+      - folders
+    get:
+      parameters:
+      - description: Folder ID
+        in: path
+        name: folderId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/usecase.FolderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errBody'
+      security:
+      - BearerAuth: []
+      summary: Get folder
+      tags:
+      - folders
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Folder ID
+        in: path
+        name: folderId
+        required: true
+        type: integer
+      - description: New name
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/usecase.UpdateFolderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/usecase.FolderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errBody'
+      security:
+      - BearerAuth: []
+      summary: Update folder
+      tags:
+      - folders
+  /api/v1/folders/{folderId}/notes:
+    get:
+      parameters:
+      - description: Folder ID
+        in: path
+        name: folderId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.notesListBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errBody'
+      security:
+      - BearerAuth: []
+      summary: List notes in folder
+      tags:
+      - notes
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Folder ID
+        in: path
+        name: folderId
+        required: true
+        type: integer
+      - description: Note
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/usecase.CreateNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/usecase.NoteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errBody'
+      security:
+      - BearerAuth: []
+      summary: Create note
+      tags:
+      - notes
+  /api/v1/notes/{noteId}:
+    delete:
+      parameters:
+      - description: Note ID
+        in: path
+        name: noteId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.msgBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errBody'
+      security:
+      - BearerAuth: []
+      summary: Delete note
+      tags:
+      - notes
+    get:
+      parameters:
+      - description: Note ID
+        in: path
+        name: noteId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/usecase.NoteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errBody'
+      security:
+      - BearerAuth: []
+      summary: Get note
+      tags:
+      - notes
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Note ID
+        in: path
+        name: noteId
+        required: true
+        type: integer
+      - description: Note fields
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/usecase.UpdateNoteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/usecase.NoteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errBody'
+      security:
+      - BearerAuth: []
+      summary: Update note
+      tags:
+      - notes
+  /api/v1/shares:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Share payload
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/usecase.ShareAssetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/usecase.ShareResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errBody'
+      security:
+      - BearerAuth: []
+      summary: Share folder or note
+      tags:
+      - shares
+  /api/v1/shares/{shareId}:
+    delete:
+      parameters:
+      - description: Share ID
+        in: path
+        name: shareId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.msgBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errBody'
+      security:
+      - BearerAuth: []
+      summary: Revoke share
+      tags:
+      - shares
+  /api/v1/shares/granted:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.sharesListBody'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errBody'
+      security:
+      - BearerAuth: []
+      summary: Shares granted by me
+      tags:
+      - shares
+  /api/v1/shares/received:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.sharesListBody'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.errBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errBody'
+      security:
+      - BearerAuth: []
+      summary: Shares received by me
+      tags:
+      - shares
+securityDefinitions:
+  BearerAuth:
+    description: Bearer token from Auth service
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

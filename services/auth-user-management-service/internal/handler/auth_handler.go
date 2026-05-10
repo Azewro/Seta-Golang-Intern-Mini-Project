@@ -21,7 +21,18 @@ func NewAuthHandler(authUsecase usecase.AuthUsecase) *AuthHandler {
 	return &AuthHandler{authUsecase: authUsecase}
 }
 
-// Register (POST /api/v1/auth/register)
+// Register creates a new user account.
+// @Summary Register
+// @Description Create account (role manager or member; default member). Email verification flow depends on SMTP configuration.
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body usecase.RegisterRequest true "Credentials"
+// @Success 201 {object} registerCreatedResponse
+// @Failure 400 {object} errorJSON
+// @Failure 409 {object} errorJSON
+// @Failure 500 {object} errorJSON
+// @Router /api/v1/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req usecase.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -48,7 +59,15 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	})
 }
 
-// VerifyEmail (GET /api/v1/auth/verify-email?token=...)
+// VerifyEmail marks a user verified using a one-time token from email.
+// @Summary Verify email
+// @Tags auth
+// @Produce json
+// @Param token query string true "Verification token from email link"
+// @Success 200 {object} messageJSON
+// @Failure 400 {object} errorJSON
+// @Failure 500 {object} errorJSON
+// @Router /api/v1/auth/verify-email [get]
 func (h *AuthHandler) VerifyEmail(c *gin.Context) {
 	rawToken := strings.TrimSpace(c.Query("token"))
 	if rawToken == "" {
@@ -72,7 +91,16 @@ func (h *AuthHandler) VerifyEmail(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Email verified successfully. You can now log in."})
 }
 
-// ResendVerification (POST /api/v1/auth/resend-verification)
+// ResendVerification emails a new verification link if the account exists and is unverified.
+// @Summary Resend verification email
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body usecase.ResendVerificationRequest true "Email"
+// @Success 200 {object} messageJSON
+// @Failure 400 {object} errorJSON
+// @Failure 500 {object} errorJSON
+// @Router /api/v1/auth/resend-verification [post]
 func (h *AuthHandler) ResendVerification(c *gin.Context) {
 	var req usecase.ResendVerificationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -94,7 +122,18 @@ func (h *AuthHandler) ResendVerification(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "If the account exists and is unverified, a new verification email has been sent."})
 }
 
-// Login (POST /api/v1/auth/login)
+// Login returns a JWT and user profile.
+// @Summary Login
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body usecase.LoginRequest true "Credentials"
+// @Success 200 {object} usecase.LoginResponse
+// @Failure 400 {object} errorJSON
+// @Failure 401 {object} errorJSON
+// @Failure 403 {object} errorJSON
+// @Failure 500 {object} errorJSON
+// @Router /api/v1/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req usecase.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -120,7 +159,15 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, loginResponse)
 }
 
-// Logout (POST /api/v1/auth/logout)
+// Logout revokes the current session (JWT must still be valid).
+// @Summary Logout
+// @Tags auth
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} messageJSON
+// @Failure 401 {object} errorJSON
+// @Failure 500 {object} errorJSON
+// @Router /api/v1/auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
 	tokenIDValue, exists := c.Get("tokenID")
 	if !exists {
@@ -146,7 +193,16 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }
 
-// Me (GET /api/v1/users/me) authenticated only
+// Me returns the authenticated user profile.
+// @Summary Current user
+// @Tags users
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} usecase.UserResponse
+// @Failure 401 {object} errorJSON
+// @Failure 404 {object} errorJSON
+// @Failure 500 {object} errorJSON
+// @Router /api/v1/users/me [get]
 func (h *AuthHandler) Me(c *gin.Context) {
 	userIDValue, exists := c.Get("userID")
 	if !exists {
@@ -173,11 +229,19 @@ func (h *AuthHandler) Me(c *gin.Context) {
 	c.JSON(http.StatusOK, profile)
 }
 
-// BulkGetUsers (POST /api/v1/users/batch) authenticated only
+// BulkGetUsers resolves user summaries for a list of IDs.
+// @Summary Bulk get users
+// @Tags users
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param body body usecase.BulkGetUsersRequest true "User IDs"
+// @Success 200 {object} bulkUsersResponse
+// @Failure 400 {object} errorJSON
+// @Failure 500 {object} errorJSON
+// @Router /api/v1/users/bulk [post]
 func (h *AuthHandler) BulkGetUsers(c *gin.Context) {
-	var req struct {
-		UserIDs []uint `json:"userIds" binding:"required"`
-	}
+	var req usecase.BulkGetUsersRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -192,7 +256,18 @@ func (h *AuthHandler) BulkGetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": users})
 }
 
-// ListUsers (GET /api/v1/users) manager only
+// ListUsers returns a paginated list (global manager only).
+// @Summary List users
+// @Description Requires global role manager.
+// @Tags users
+// @Security BearerAuth
+// @Produce json
+// @Param page query int false "Page" default(1)
+// @Param limit query int false "Page size" default(20)
+// @Success 200 {object} listUsersResponse
+// @Failure 403 {object} errorJSON
+// @Failure 500 {object} errorJSON
+// @Router /api/v1/users [get]
 func (h *AuthHandler) ListUsers(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
@@ -208,4 +283,28 @@ func (h *AuthHandler) ListUsers(c *gin.Context) {
 		"limit": limit,
 		"data":  users,
 	})
+}
+
+// Swagger response helpers (referenced by comments only).
+type registerCreatedResponse struct {
+	Message string               `json:"message"`
+	User    usecase.UserResponse `json:"user"`
+}
+
+type messageJSON struct {
+	Message string `json:"message"`
+}
+
+type errorJSON struct {
+	Error string `json:"error"`
+}
+
+type bulkUsersResponse struct {
+	Data []usecase.UserResponse `json:"data"`
+}
+
+type listUsersResponse struct {
+	Page  int                      `json:"page"`
+	Limit int                      `json:"limit"`
+	Data  []usecase.UserResponse `json:"data"`
 }

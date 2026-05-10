@@ -1,0 +1,343 @@
+basePath: /
+definitions:
+  handler.errorBody:
+    properties:
+      error:
+        type: string
+    type: object
+  handler.messageBody:
+    properties:
+      message:
+        type: string
+    type: object
+  handler.teamsListBody:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/usecase.TeamResponse'
+        type: array
+    type: object
+  usecase.CreateTeamRequest:
+    properties:
+      teamName:
+        type: string
+    required:
+    - teamName
+    type: object
+  usecase.TeamActionRequest:
+    properties:
+      userId:
+        type: integer
+    required:
+    - userId
+    type: object
+  usecase.TeamResponse:
+    properties:
+      createdAt:
+        type: string
+      mainManagerUserId:
+        type: integer
+      managers:
+        items:
+          type: integer
+        type: array
+      members:
+        items:
+          type: integer
+        type: array
+      teamId:
+        type: integer
+      teamName:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+host: localhost:8081
+info:
+  contact:
+    name: Seta Golang Intern Project
+  description: 'Teams, managers, and members. All JSON routes require a valid JWT
+    from the Auth service. Use header: Authorization: Bearer followed by the token.'
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: Team Management Service API
+  version: "1.0"
+paths:
+  /api/v1/teams:
+    post:
+      consumes:
+      - application/json
+      description: Global manager only. Creator becomes main manager.
+      parameters:
+      - description: Team name
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/usecase.CreateTeamRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/usecase.TeamResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+      security:
+      - BearerAuth: []
+      summary: Create team
+      tags:
+      - teams
+  /api/v1/teams/{teamId}:
+    get:
+      parameters:
+      - description: Team ID
+        in: path
+        name: teamId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/usecase.TeamResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+      security:
+      - BearerAuth: []
+      summary: Get team
+      tags:
+      - teams
+  /api/v1/teams/{teamId}/managers:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Team ID
+        in: path
+        name: teamId
+        required: true
+        type: integer
+      - description: Target user (must be global manager)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/usecase.TeamActionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.messageBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+      security:
+      - BearerAuth: []
+      summary: Add manager
+      tags:
+      - teams
+  /api/v1/teams/{teamId}/managers/{userId}:
+    delete:
+      parameters:
+      - description: Team ID
+        in: path
+        name: teamId
+        required: true
+        type: integer
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.messageBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+      security:
+      - BearerAuth: []
+      summary: Remove manager
+      tags:
+      - teams
+  /api/v1/teams/{teamId}/members:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Team ID
+        in: path
+        name: teamId
+        required: true
+        type: integer
+      - description: Target user
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/usecase.TeamActionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.messageBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+      security:
+      - BearerAuth: []
+      summary: Add member
+      tags:
+      - teams
+  /api/v1/teams/{teamId}/members/{userId}:
+    delete:
+      parameters:
+      - description: Team ID
+        in: path
+        name: teamId
+        required: true
+        type: integer
+      - description: User ID
+        in: path
+        name: userId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.messageBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+      security:
+      - BearerAuth: []
+      summary: Remove member
+      tags:
+      - teams
+  /api/v1/teams/my:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.teamsListBody'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorBody'
+      security:
+      - BearerAuth: []
+      summary: List my teams
+      tags:
+      - teams
+securityDefinitions:
+  BearerAuth:
+    description: Bearer token issued by Auth service (include the word Bearer, a space,
+      then the JWT)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
