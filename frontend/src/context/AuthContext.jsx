@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { loginApi, logoutApi } from "../api/authApi";
+import { loginApi, logoutApi, googleLoginApi } from "../api/authApi";
 import { getMeApi } from "../api/userApi";
 import { clearToken, getToken, setToken } from "../auth/tokenStorage";
 
@@ -54,6 +54,14 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  const googleLogin = async (idToken) => {
+    const data = await googleLoginApi(idToken);
+    setToken(data.accessToken);
+    setTokenState(data.accessToken);
+    setUser(data.user);
+    return data;
+  };
+
   const logout = async () => {
     try {
       if (token) {
@@ -73,6 +81,7 @@ export function AuthProvider({ children }) {
       loading,
       isAuthenticated: Boolean(token && user),
       login,
+      googleLogin,
       logout,
       setUser,
     }),
@@ -89,4 +98,3 @@ export function useAuth() {
   }
   return context;
 }
-

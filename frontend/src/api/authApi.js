@@ -19,6 +19,13 @@ export function resendVerificationApi(payload) {
   });
 }
 
+export function googleLoginApi(idToken) {
+  return request("/auth/google", {
+    method: "POST",
+    body: JSON.stringify({ idToken }),
+  });
+}
+
 export function loginApi(payload) {
   return request("/auth/login", {
     method: "POST",

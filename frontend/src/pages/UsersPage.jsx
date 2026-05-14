@@ -1,17 +1,31 @@
 import { useEffect, useState } from "react";
 import { listUsersApi } from "../api/userApi";
 import { useAuth } from "../context/AuthContext";
+import ImportUsersModal from "../components/ImportUsersModal";
 
 export default function UsersPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showImport, setShowImport] = useState(false);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const data = await listUsersApi(token, 1, 50);
+      setUsers(data.data || []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
 
-    async function loadUsers() {
+    async function initialLoad() {
       try {
         const data = await listUsersApi(token, 1, 50);
         if (active) {
@@ -28,13 +42,13 @@ export default function UsersPage() {
       }
     }
 
-    loadUsers();
+    initialLoad();
     return () => {
       active = false;
     };
   }, [token]);
 
-  if (loading) {
+  if (loading && users.length === 0) {
     return (
       <section className="card page-panel users-panel" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>
@@ -46,9 +60,16 @@ export default function UsersPage() {
 
   return (
     <section className="card page-panel users-panel">
-      <div style={{ marginBottom: '2.5rem' }}>
-        <h2 style={{ marginBottom: '0.5rem' }}>Users Directory</h2>
-        <p className="muted" style={{ margin: 0 }}>Manager override: Viewing all workspace accounts and access levels.</p>
+      <div style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h2 style={{ marginBottom: '0.5rem' }}>Users Directory</h2>
+          <p className="muted" style={{ margin: 0 }}>Manager override: Viewing all workspace accounts and access levels.</p>
+        </div>
+        {user?.role === "manager" && (
+          <button className="nav-btn" onClick={() => setShowImport(true)}>
+            Bulk Import CSV
+          </button>
+        )}
       </div>
       
       {error && <p className="error">{error}</p>}
@@ -80,7 +101,14 @@ export default function UsersPage() {
           </table>
         </div>
       )}
+
+      {showImport && (
+        <ImportUsersModal
+          token={token}
+          onClose={() => setShowImport(false)}
+          onImportSuccess={() => loadUsers()}
+        />
+      )}
     </section>
   );
 }
-

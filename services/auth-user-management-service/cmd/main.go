@@ -84,6 +84,7 @@ func main() {
 			auth.GET("/verify-email", authHandler.VerifyEmail)
 			auth.POST("/resend-verification", authHandler.ResendVerification)
 			auth.POST("/login", authHandler.Login)
+			auth.POST("/google", authHandler.GoogleLogin)
 		}
 
 		protected := api.Group("/")

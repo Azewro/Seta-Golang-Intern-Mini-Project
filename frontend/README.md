@@ -135,4 +135,5 @@ The values are used by [vite.config.js](vite.config.js) proxy rules.
 - Authentication pages are available (`/login`, `/register`, `/verify-email`).
 - Stage 1 pages are available (`/profile`, `/users`, `/teams`).
 - Stage 2 Service 1 page is available (`/assets`).
+- Stage 2 Bulk Import feature UI is implemented (CSV upload modal in the Users Manager view).
 - UX and validation are still evolving; this is not a final production UI.

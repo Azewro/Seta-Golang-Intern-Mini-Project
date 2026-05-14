@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"auth-user-management-service/internal/domain"
-	"auth-user-management-service/internal/repository"
 	"auth-user-management-service/pkg/utils"
 
 	"github.com/google/uuid"
@@ -44,6 +43,11 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// GoogleLoginRequest defines the input payload for Google login.
+type GoogleLoginRequest struct {
+	IDToken string `json:"idToken" binding:"required"`
+}
+
 // ResendVerificationRequest defines payload to resend verification emails.
 type ResendVerificationRequest struct {
 	Email string `json:"email" binding:"required,email"`
@@ -73,6 +77,7 @@ type AuthUsecase interface {
 	VerifyEmail(rawToken string) error
 	ResendVerification(req *ResendVerificationRequest) error
 	Login(req *LoginRequest) (*LoginResponse, error)
+	GoogleLogin(req *GoogleLoginRequest) (*LoginResponse, error)
 	Logout(tokenID string) error
 	ListUsers(page int, limit int) ([]UserResponse, error)
 	GetMyProfile(userID uint) (*UserResponse, error)
@@ -89,6 +94,7 @@ type authUsecaseImpl struct {
 	verifyTokenTTL time.Duration
 	appBaseURL     string
 	smtpConfig     utils.SMTPConfig
+	googleClientID string
 }
 
 // NewAuthUsecase creates a new usecase instance (Dependency Injection).
@@ -121,6 +127,7 @@ func NewAuthUsecase(
 		verifyTokenTTL: time.Duration(verifyTTLMinutes) * time.Minute,
 		appBaseURL:     appBaseURL,
 		smtpConfig:     utils.LoadSMTPConfig(),
+		googleClientID: strings.TrimSpace(os.Getenv("GOOGLE_CLIENT_ID")),
 	}
 }
 
@@ -244,6 +251,84 @@ func (u *authUsecaseImpl) Login(req *LoginRequest) (*LoginResponse, error) {
 		ExpiresAt: expiresAt,
 	})
 	if err != nil {
+		return nil, err
+	}
+
+	return &LoginResponse{
+		AccessToken: token,
+		ExpiresAt:   expiresAt,
+		User:        toUserResponse(user),
+	}, nil
+}
+
+func (u *authUsecaseImpl) GoogleLogin(req *GoogleLoginRequest) (*LoginResponse, error) {
+	// Verify ID token with Google's tokeninfo endpoint for simplicity.
+	tokenInfoResp, err := utils.VerifyGoogleIDToken(req.IDToken)
+	if err != nil {
+		return nil, ErrInvalidCredentials
+	}
+
+	if u.googleClientID != "" && tokenInfoResp.Aud != u.googleClientID {
+		// Log warning or return error depending on strictness. Here we enforce if set.
+		return nil, errors.New("unauthorized client id")
+	}
+
+	if tokenInfoResp.Email == "" {
+		return nil, errors.New("google account has no email")
+	}
+
+	emailNorm := strings.ToLower(tokenInfoResp.Email)
+
+	user, err := u.userRepo.FindByEmail(emailNorm)
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, err
+		}
+
+		// Auto-register new user
+		randomPassword := uuid.NewString() + "xA1!"
+		hashedPass, _ := utils.HashPassword(randomPassword)
+
+		username := tokenInfoResp.Name
+		if username == "" {
+			parts := strings.Split(emailNorm, "@")
+			username = parts[0]
+		}
+
+		user = &domain.User{
+			Username:   username,
+			Email:      emailNorm,
+			Password:   hashedPass,
+			Role:       "member", // default role
+			IsVerified: true,     // OAuth implies verified
+		}
+
+		if dbErr := u.userRepo.CreateUser(user); dbErr != nil {
+			return nil, dbErr
+		}
+	} else {
+		// Ensure user is verified if they login via Google
+		if !user.IsVerified {
+			_ = u.userRepo.MarkUserVerified(user.ID)
+			user.IsVerified = true
+		}
+	}
+
+	if u.jwtSecret == "" {
+		return nil, ErrJWTSecretMissing
+	}
+
+	tokenID := uuid.NewString()
+	token, expiresAt, err := utils.GenerateToken(user.ID, user.Role, tokenID, u.jwtSecret, u.jwtTokenTTL)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := u.sessionRepo.CreateSession(&domain.Session{
+		UserID:    user.ID,
+		TokenID:   tokenID,
+		ExpiresAt: expiresAt,
+	}); err != nil {
 		return nil, err
 	}
 

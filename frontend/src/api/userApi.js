@@ -14,3 +14,12 @@ export function bulkGetUsersApi(userIds, token) {
     body: JSON.stringify({ userIds })
   }, token);
 }
+
+export function importUsersApi(file, token) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return request(`/import-users`, {
+    method: "POST",
+    body: formData
+  }, token);
+}

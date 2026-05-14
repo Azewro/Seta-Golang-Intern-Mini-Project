@@ -1,14 +1,15 @@
 import { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { resendVerificationApi } from "../api/authApi";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import { validateEmail, validatePassword } from "../utils/validators";
+import { GoogleLogin } from "@react-oauth/google";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const { pushToast } = useToast();
 
   const [email, setEmail] = useState("");
@@ -68,6 +69,18 @@ export default function LoginPage() {
 
   const shouldShowResend = error.toLowerCase().includes("not verified");
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError("");
+    setSubmitting(true);
+    try {
+      await googleLogin(credentialResponse.credential);
+      navigate("/profile");
+    } catch (err) {
+      setError(err.message || "Google login failed.");
+      setSubmitting(false);
+    }
+  };
+
   return (
     <section className="auth-layout">
       <aside className="auth-hero">
@@ -115,6 +128,15 @@ export default function LoginPage() {
         <p className="muted auth-switch">
           No account yet? <Link to="/register">Register here</Link>
         </p>
+        <div style={{ marginTop: "2rem", display: "flex", justifyContent: "center" }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError("Google Setup/Login Failed")}
+            theme="filled_blue"
+            shape="pill"
+            text="signin_with"
+          />
+        </div>
       </section>
     </section>
   );

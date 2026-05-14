@@ -158,6 +158,32 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, loginResponse)
 }
 
+// GoogleLogin accepts a Google ID token and returns a JWT/session.
+// @Summary Google Login
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body usecase.GoogleLoginRequest true "Google ID Token"
+// @Success 200 {object} usecase.LoginResponse
+// @Failure 401 {object} simpleErrJSON
+// @Failure 500 {object} simpleErrJSON
+// @Router /api/v1/auth/google [post]
+func (h *AuthHandler) GoogleLogin(c *gin.Context) {
+	var req usecase.GoogleLoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	loginResponse, err := h.authUsecase.GoogleLogin(&req)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, loginResponse)
+}
+
 // Logout revokes the current session.
 // @Summary Logout
 // @Tags auth

@@ -15,6 +15,10 @@ async function request(path, options = {}, token) {
     ...(options.headers || {}),
   };
 
+  if (options.body instanceof FormData) {
+    delete headers["Content-Type"];
+  }
+
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
@@ -36,4 +40,3 @@ async function request(path, options = {}, token) {
 }
 
 export default request;
-

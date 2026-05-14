@@ -139,10 +139,14 @@ flowchart LR
 
 ### Option A: Local One-Command Startup
 
+This method starts the PostgreSQL database via Docker in the background (`db` service), and then runs the Go backend processes and Vite frontend natively on your host machine.
+
 ```powershell
 npm install
 npm run dev:all
 ```
+
+*Note: If the Go services crash immediately because the database isn't fully ready yet, just terminate the terminal (Ctrl+C) and run `npm run dev:all` again. The DB container will already be up.*
 
 ### Option B: Docker One-Command Startup (Dev Hot Reload)
 
