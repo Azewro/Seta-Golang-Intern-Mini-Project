@@ -21,8 +21,8 @@ type UserResponse struct {
 	Role string `json:"role"`
 }
 
-type bulkUsersResponse struct {
-	Data []UserResponse `json:"data"`
+type verifyResponse struct {
+	User UserResponse `json:"user"`
 }
 
 type AuthClient interface {
@@ -68,12 +68,12 @@ func (c *authClientImpl) VerifyToken(token string) (*UserResponse, error) {
 		return nil, fmt.Errorf("%w: %d", ErrUnexpectedStatusCode, resp.StatusCode)
 	}
 
-	var data UserResponse
+	var data verifyResponse
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return nil, err
 	}
 
-	return &data, nil
+	return &data.User, nil
 }
 
 type bulkRequest struct {
@@ -95,6 +95,12 @@ func (c *authClientImpl) GetUsers(token string, ids []uint) ([]UserResponse, err
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	}
 
+	// We might need to bypass Auth or use a service-to-service token for bulk if it requires auth.
+	// Let's assume the user endpoint /bulk doesn't require a strict member/manager token from the end user,
+	// wait, if it does, how do we pass it? The team service needs to call it.
+	// For Stage 1 simplicity, we'll assume /bulk is open or we can just send it without auth and if we need one,
+	// we'd need to modify the auth service. Let's look at auth service /bulk to see if it requires auth.
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, err
@@ -105,9 +111,9 @@ func (c *authClientImpl) GetUsers(token string, ids []uint) ([]UserResponse, err
 		return nil, fmt.Errorf("%w: %d", ErrUnexpectedStatusCode, resp.StatusCode)
 	}
 
-	var data bulkUsersResponse
+	var data []UserResponse
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		return nil, err
 	}
-	return data.Data, nil
+	return data, nil
 }

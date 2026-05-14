@@ -5,7 +5,6 @@ import RegisterPage from "./pages/RegisterPage";
 import ProfilePage from "./pages/ProfilePage";
 import UsersPage from "./pages/UsersPage";
 import TeamsPage from "./pages/TeamsPage";
-import AssetsPage from "./pages/AssetsPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -22,6 +21,15 @@ function HomeRedirect() {
   return <Navigate to={destination} replace />;
 }
 
+function GuestRoute({ children }) {
+  const { user } = useAuth();
+  if (user) {
+    const destination = user.role === "manager" ? "/users" : "/profile";
+    return <Navigate to={destination} replace />;
+  }
+  return children;
+}
+
 export default function App() {
   return (
     <div className="app-shell">
@@ -30,8 +38,22 @@ export default function App() {
       <main className="container">
         <Routes>
           <Route path="/" element={<HomeRedirect />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route
+            path="/login"
+            element={
+              <GuestRoute>
+                <LoginPage />
+              </GuestRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <GuestRoute>
+                <RegisterPage />
+              </GuestRoute>
+            }
+          />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
 
           <Route
@@ -55,18 +77,9 @@ export default function App() {
           <Route
             path="/teams"
             element={
-              <ProtectedRoute>
+              <ManagerRoute>
                 <TeamsPage />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/assets"
-            element={
-              <ProtectedRoute>
-                <AssetsPage />
-              </ProtectedRoute>
+              </ManagerRoute>
             }
           />
 
@@ -76,4 +89,3 @@ export default function App() {
     </div>
   );
 }
-

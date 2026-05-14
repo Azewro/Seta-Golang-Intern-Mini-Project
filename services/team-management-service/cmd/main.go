@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 
-	_ "team-management-service/docs"
 	"team-management-service/config"
 	"team-management-service/internal/handler"
 	"team-management-service/internal/middleware"
@@ -13,27 +12,7 @@ import (
 	"team-management-service/pkg/client"
 
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 )
-
-// @title Team Management Service API
-// @version 1.0
-// @description Teams, managers, and members. All JSON routes require a valid JWT from the Auth service. Use header: Authorization: Bearer followed by the token.
-// @termsOfService http://swagger.io/terms/
-
-// @contact.name Seta Golang Intern Project
-
-// @license.name MIT
-// @license.url https://opensource.org/licenses/MIT
-
-// @host localhost:8081
-// @BasePath /
-
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-// @description Bearer token issued by Auth service (include the word Bearer, a space, then the JWT)
 
 func main() {
 	config.LoadEnv()
@@ -45,8 +24,6 @@ func main() {
 	teamHandler := handler.NewTeamHandler(teamUsecase)
 
 	r := gin.Default()
-
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -84,7 +61,6 @@ func main() {
 	}
 
 	log.Printf("Team service is starting on port http://localhost:%s\n", port)
-	log.Printf("Swagger UI: http://localhost:%s/swagger/index.html\n", port)
 	if err := r.Run(":" + port); err != nil {
 		log.Fatalf("Server failed to start: %v", err)
 	}

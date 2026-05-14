@@ -13,7 +13,7 @@ The project is intentionally developed in stages. The codebase currently include
 
 - Stage 1 foundation (Auth/User + Team services)  
 - Stage 2 Service 1 (Asset Management & Sharing)  
-- Stage 2 Service 2 (`POST /import-users` concurrency challenge) is **not implemented yet**
+- Stage 2 Service 2 (`POST /import-users` bulk CSV import with worker pool) is **implemented** in the Auth service
 - Stage 3 is **not implemented yet**
 
 ## Tech Stack
@@ -180,7 +180,7 @@ Common keys used across services include:
 
 - Stage 1 core foundation: implemented
 - Stage 2 Service 1 (assets and sharing): implemented
-- Stage 2 Service 2 (bulk CSV import with worker pool): pending
+- Stage 2 Service 2 (bulk CSV import with worker pool): implemented
 - Stage 3 scale/events scope: pending
 
 This documentation reflects the current in-progress state of the internship project rather than a final production release.

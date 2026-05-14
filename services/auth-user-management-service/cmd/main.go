@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"auth-user-management-service/config"
 	_ "auth-user-management-service/docs"
+	"auth-user-management-service/config"
 	"auth-user-management-service/internal/handler"
 	"auth-user-management-service/internal/middleware"
 	"auth-user-management-service/internal/repository"
@@ -18,7 +18,7 @@ import (
 
 // @title Auth & User Management Service API
 // @version 1.0
-// @description JWT authentication, optional email verification, session revocation, and user APIs. Use header Authorization: Bearer plus your access token.
+// @description JWT authentication, session revocation, user APIs, and CSV bulk user import for managers. Authorization header: Bearer followed by JWT.
 // @termsOfService http://swagger.io/terms/
 
 // @contact.name Seta Golang Intern Project
@@ -32,7 +32,7 @@ import (
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
-// @description JWT from POST /api/v1/auth/login (prefix with "Bearer " in Swagger UI Authorize dialog, or paste token only depending on client)
+// @description JWT from POST /api/v1/auth/login
 
 func main() {
 	// Load configuration from root .env.backend (or ENV_FILE)
@@ -61,6 +61,7 @@ func main() {
 
 	// Initialize Gin App (similar to SpringApplication.run)
 	r := gin.Default()
+	r.MaxMultipartMemory = 4 << 20 // 4 MiB (multipart parsing buffer; uploads validated separately)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -96,6 +97,7 @@ func main() {
 			manager.Use(middleware.ManagerOnly())
 			{
 				manager.GET("/users", authHandler.ListUsers)
+				manager.POST("/import-users", authHandler.ImportUsers)
 			}
 		}
 	}

@@ -19,4 +19,3 @@ type Team struct {
 func (Team) TableName() string {
 	return "teams"
 }
-

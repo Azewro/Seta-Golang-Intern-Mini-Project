@@ -86,11 +86,21 @@ swag init -g main.go -o docs --parseInternal -d ./cmd,./internal/handler,./inter
 - `GET /users/me` (authenticated)
 - `POST /users/bulk` (authenticated, internal cross-service lookup)
 - `GET /users` (manager-only)
+- `POST /import-users` (manager-only, multipart form field `file`, comma-separated CSV)
+
+### Bulk import (`POST /import-users`)
+
+- **CSV header (required columns):** `username`, `email`, `password`. Optional column: `role`. Column order may vary; unknown column names are rejected.
+- **Delimiter:** comma. **Max upload size:** 3 MB.
+- **Defaults:** empty or missing `role` becomes `member`. Imported accounts are created **email-verified** (`isVerified: true`).
+- **Duplicates:** existing emails or duplicate emails within the same file are counted as failures (no upsert).
+- **Concurrency:** worker pool size from environment variable `IMPORT_WORKERS` (default `5` if unset or invalid).
+- **Response:** JSON with `success`, `failed`, `errors` (up to 50 row-level messages), and `errorsTruncated` when more than 50 errors occurred.
 
 ## Authorization Model
 
 - Token parsing and session validity are enforced by auth middleware.
-- `manager` role is required for `GET /users`.
+- `manager` role is required for `GET /users` and `POST /import-users`.
 - `POST /users/bulk` is intentionally available to authenticated callers for internal service-to-service workflows (for example team/asset lookups).
 
 ## Error Handling
@@ -142,10 +152,11 @@ Main required keys in root `.env.backend`:
 - `APP_BASE_URL`
 - `JWT_SECRET`, `JWT_EXPIRES_HOURS`
 - `EMAIL_VERIFY_TOKEN_TTL_MINUTES`
+- `IMPORT_WORKERS` (optional, positive integer; bulk CSV import worker pool size, default `5`)
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM_EMAIL`, `SMTP_FROM_NAME`
 
 ## Current Status
 
 - Stage 1 requirements for auth/user management are implemented.
 - Service is actively used by Team and Asset services for token/user resolution.
-- Future hardening areas: stricter observability, test depth, and import/concurrency features from later stages.
+- Bulk CSV user import (`POST /import-users`) for managers is implemented with a configurable worker pool.

@@ -1,18 +1,20 @@
 basePath: /
 definitions:
-  handler.bulkUsersResponse:
+  handler.bulkUserIDsSwagger:
+    properties:
+      userIds:
+        items:
+          type: integer
+        type: array
+    type: object
+  handler.bulkUsersSwagger:
     properties:
       data:
         items:
           $ref: '#/definitions/usecase.UserResponse'
         type: array
     type: object
-  handler.errorJSON:
-    properties:
-      error:
-        type: string
-    type: object
-  handler.listUsersResponse:
+  handler.listUsersSwagger:
     properties:
       data:
         items:
@@ -23,26 +25,44 @@ definitions:
       page:
         type: integer
     type: object
-  handler.messageJSON:
+  handler.messageSwagger:
     properties:
       message:
         type: string
     type: object
-  handler.registerCreatedResponse:
+  handler.registerCreatedSwagger:
     properties:
       message:
         type: string
       user:
         $ref: '#/definitions/usecase.UserResponse'
     type: object
-  usecase.BulkGetUsersRequest:
+  handler.simpleErrJSON:
     properties:
-      userIds:
+      error:
+        type: string
+    type: object
+  usecase.ImportUserError:
+    properties:
+      email:
+        type: string
+      message:
+        type: string
+      rowNumber:
+        type: integer
+    type: object
+  usecase.ImportUsersResponse:
+    properties:
+      errors:
         items:
-          type: integer
+          $ref: '#/definitions/usecase.ImportUserError'
         type: array
-    required:
-    - userIds
+      errorsTruncated:
+        type: boolean
+      failed:
+        type: integer
+      success:
+        type: integer
     type: object
   usecase.LoginRequest:
     properties:
@@ -110,8 +130,8 @@ host: localhost:8080
 info:
   contact:
     name: Seta Golang Intern Project
-  description: 'JWT authentication, optional email verification, session revocation,
-    and user APIs. Use header Authorization: Bearer plus your access token.'
+  description: 'JWT authentication, session revocation, user APIs, and CSV bulk user
+    import for managers. Authorization header: Bearer followed by JWT.'
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
@@ -140,19 +160,19 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
       summary: Login
       tags:
       - auth
@@ -164,15 +184,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.messageJSON'
+            $ref: '#/definitions/handler.messageSwagger'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
       security:
       - BearerAuth: []
       summary: Logout
@@ -182,10 +202,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create account (role manager or member; default member). Email
-        verification flow depends on SMTP configuration.
       parameters:
-      - description: Credentials
+      - description: Registration payload
         in: body
         name: body
         required: true
@@ -197,19 +215,19 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/handler.registerCreatedResponse'
+            $ref: '#/definitions/handler.registerCreatedSwagger'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
         "409":
           description: Conflict
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
       summary: Register
       tags:
       - auth
@@ -230,22 +248,22 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.messageJSON'
+            $ref: '#/definitions/handler.messageSwagger'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
       summary: Resend verification email
       tags:
       - auth
   /api/v1/auth/verify-email:
     get:
       parameters:
-      - description: Verification token from email link
+      - description: Verification token
         in: query
         name: token
         required: true
@@ -256,21 +274,61 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.messageJSON'
+            $ref: '#/definitions/handler.messageSwagger'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
       summary: Verify email
       tags:
       - auth
+  /api/v1/import-users:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 'Multipart form field "file": comma-separated CSV with header row
+        (username,email,password and optional role). Max upload size 3MB. Worker pool
+        size from IMPORT_WORKERS env (default 5).'
+      parameters:
+      - description: CSV file
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/usecase.ImportUsersResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.simpleErrJSON'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.simpleErrJSON'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.simpleErrJSON'
+        "413":
+          description: Request Entity Too Large
+          schema:
+            $ref: '#/definitions/handler.simpleErrJSON'
+      security:
+      - BearerAuth: []
+      summary: Bulk import users from CSV
+      tags:
+      - users
   /api/v1/users:
     get:
-      description: Requires global role manager.
       parameters:
       - default: 1
         description: Page
@@ -288,15 +346,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.listUsersResponse'
+            $ref: '#/definitions/handler.listUsersSwagger'
         "403":
           description: Forbidden
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
       security:
       - BearerAuth: []
       summary: List users
@@ -312,22 +370,22 @@ paths:
         name: body
         required: true
         schema:
-          $ref: '#/definitions/usecase.BulkGetUsersRequest'
+          $ref: '#/definitions/handler.bulkUserIDsSwagger'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.bulkUsersResponse'
+            $ref: '#/definitions/handler.bulkUsersSwagger'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
       security:
       - BearerAuth: []
       summary: Bulk get users
@@ -345,15 +403,15 @@ paths:
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/handler.errorJSON'
+            $ref: '#/definitions/handler.simpleErrJSON'
       security:
       - BearerAuth: []
       summary: Current user
@@ -361,8 +419,7 @@ paths:
       - users
 securityDefinitions:
   BearerAuth:
-    description: JWT from POST /api/v1/auth/login (prefix with "Bearer " in Swagger
-      UI Authorize dialog, or paste token only depending on client)
+    description: JWT from POST /api/v1/auth/login
     in: header
     name: Authorization
     type: apiKey

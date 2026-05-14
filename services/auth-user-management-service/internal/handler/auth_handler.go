@@ -21,17 +21,16 @@ func NewAuthHandler(authUsecase usecase.AuthUsecase) *AuthHandler {
 	return &AuthHandler{authUsecase: authUsecase}
 }
 
-// Register creates a new user account.
+// Register creates a new account (email verification email sent when SMTP is configured).
 // @Summary Register
-// @Description Create account (role manager or member; default member). Email verification flow depends on SMTP configuration.
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param body body usecase.RegisterRequest true "Credentials"
-// @Success 201 {object} registerCreatedResponse
-// @Failure 400 {object} errorJSON
-// @Failure 409 {object} errorJSON
-// @Failure 500 {object} errorJSON
+// @Param body body usecase.RegisterRequest true "Registration payload"
+// @Success 201 {object} registerCreatedSwagger
+// @Failure 400 {object} simpleErrJSON
+// @Failure 409 {object} simpleErrJSON
+// @Failure 500 {object} simpleErrJSON
 // @Router /api/v1/auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req usecase.RegisterRequest
@@ -59,14 +58,14 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	})
 }
 
-// VerifyEmail marks a user verified using a one-time token from email.
+// VerifyEmail completes email verification using the token from the email link.
 // @Summary Verify email
 // @Tags auth
 // @Produce json
-// @Param token query string true "Verification token from email link"
-// @Success 200 {object} messageJSON
-// @Failure 400 {object} errorJSON
-// @Failure 500 {object} errorJSON
+// @Param token query string true "Verification token"
+// @Success 200 {object} messageSwagger
+// @Failure 400 {object} simpleErrJSON
+// @Failure 500 {object} simpleErrJSON
 // @Router /api/v1/auth/verify-email [get]
 func (h *AuthHandler) VerifyEmail(c *gin.Context) {
 	rawToken := strings.TrimSpace(c.Query("token"))
@@ -91,15 +90,15 @@ func (h *AuthHandler) VerifyEmail(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Email verified successfully. You can now log in."})
 }
 
-// ResendVerification emails a new verification link if the account exists and is unverified.
+// ResendVerification sends another verification email when SMTP is configured.
 // @Summary Resend verification email
 // @Tags auth
 // @Accept json
 // @Produce json
 // @Param body body usecase.ResendVerificationRequest true "Email"
-// @Success 200 {object} messageJSON
-// @Failure 400 {object} errorJSON
-// @Failure 500 {object} errorJSON
+// @Success 200 {object} messageSwagger
+// @Failure 400 {object} simpleErrJSON
+// @Failure 500 {object} simpleErrJSON
 // @Router /api/v1/auth/resend-verification [post]
 func (h *AuthHandler) ResendVerification(c *gin.Context) {
 	var req usecase.ResendVerificationRequest
@@ -122,17 +121,17 @@ func (h *AuthHandler) ResendVerification(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "If the account exists and is unverified, a new verification email has been sent."})
 }
 
-// Login returns a JWT and user profile.
+// Login returns a JWT and user profile for verified users.
 // @Summary Login
 // @Tags auth
 // @Accept json
 // @Produce json
 // @Param body body usecase.LoginRequest true "Credentials"
 // @Success 200 {object} usecase.LoginResponse
-// @Failure 400 {object} errorJSON
-// @Failure 401 {object} errorJSON
-// @Failure 403 {object} errorJSON
-// @Failure 500 {object} errorJSON
+// @Failure 400 {object} simpleErrJSON
+// @Failure 401 {object} simpleErrJSON
+// @Failure 403 {object} simpleErrJSON
+// @Failure 500 {object} simpleErrJSON
 // @Router /api/v1/auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req usecase.LoginRequest
@@ -159,14 +158,14 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	c.JSON(http.StatusOK, loginResponse)
 }
 
-// Logout revokes the current session (JWT must still be valid).
+// Logout revokes the current session.
 // @Summary Logout
 // @Tags auth
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {object} messageJSON
-// @Failure 401 {object} errorJSON
-// @Failure 500 {object} errorJSON
+// @Success 200 {object} messageSwagger
+// @Failure 401 {object} simpleErrJSON
+// @Failure 500 {object} simpleErrJSON
 // @Router /api/v1/auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
 	tokenIDValue, exists := c.Get("tokenID")
@@ -199,9 +198,9 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 // @Security BearerAuth
 // @Produce json
 // @Success 200 {object} usecase.UserResponse
-// @Failure 401 {object} errorJSON
-// @Failure 404 {object} errorJSON
-// @Failure 500 {object} errorJSON
+// @Failure 401 {object} simpleErrJSON
+// @Failure 404 {object} simpleErrJSON
+// @Failure 500 {object} simpleErrJSON
 // @Router /api/v1/users/me [get]
 func (h *AuthHandler) Me(c *gin.Context) {
 	userIDValue, exists := c.Get("userID")
@@ -229,19 +228,21 @@ func (h *AuthHandler) Me(c *gin.Context) {
 	c.JSON(http.StatusOK, profile)
 }
 
-// BulkGetUsers resolves user summaries for a list of IDs.
+// BulkGetUsers resolves user summaries for a list of user IDs.
 // @Summary Bulk get users
 // @Tags users
 // @Security BearerAuth
 // @Accept json
 // @Produce json
-// @Param body body usecase.BulkGetUsersRequest true "User IDs"
-// @Success 200 {object} bulkUsersResponse
-// @Failure 400 {object} errorJSON
-// @Failure 500 {object} errorJSON
+// @Param body body bulkUserIDsSwagger true "User IDs"
+// @Success 200 {object} bulkUsersSwagger
+// @Failure 400 {object} simpleErrJSON
+// @Failure 500 {object} simpleErrJSON
 // @Router /api/v1/users/bulk [post]
 func (h *AuthHandler) BulkGetUsers(c *gin.Context) {
-	var req usecase.BulkGetUsersRequest
+	var req struct {
+		UserIDs []uint `json:"userIds" binding:"required"`
+	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -256,17 +257,16 @@ func (h *AuthHandler) BulkGetUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": users})
 }
 
-// ListUsers returns a paginated list (global manager only).
+// ListUsers returns a paginated user list (global manager only).
 // @Summary List users
-// @Description Requires global role manager.
 // @Tags users
 // @Security BearerAuth
 // @Produce json
 // @Param page query int false "Page" default(1)
 // @Param limit query int false "Page size" default(20)
-// @Success 200 {object} listUsersResponse
-// @Failure 403 {object} errorJSON
-// @Failure 500 {object} errorJSON
+// @Success 200 {object} listUsersSwagger
+// @Failure 403 {object} simpleErrJSON
+// @Failure 500 {object} simpleErrJSON
 // @Router /api/v1/users [get]
 func (h *AuthHandler) ListUsers(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -285,25 +285,75 @@ func (h *AuthHandler) ListUsers(c *gin.Context) {
 	})
 }
 
-// Swagger response helpers (referenced by comments only).
-type registerCreatedResponse struct {
-	Message string               `json:"message"`
-	User    usecase.UserResponse `json:"user"`
+// ImportUsers accepts a CSV file and creates users concurrently (manager only).
+// @Summary Bulk import users from CSV
+// @Description Multipart form field "file": comma-separated CSV with header row (username,email,password and optional role). Max upload size 3MB. Worker pool size from IMPORT_WORKERS env (default 5).
+// @Tags users
+// @Security BearerAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param file formData file true "CSV file"
+// @Success 200 {object} usecase.ImportUsersResponse
+// @Failure 400 {object} simpleErrJSON
+// @Failure 401 {object} simpleErrJSON
+// @Failure 403 {object} simpleErrJSON
+// @Failure 413 {object} simpleErrJSON
+// @Router /api/v1/import-users [post]
+func (h *AuthHandler) ImportUsers(c *gin.Context) {
+	fh, err := c.FormFile(formImportFileField)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing multipart file field \"file\""})
+		return
+	}
+	if fh.Size > maxImportUploadBytes {
+		c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "file exceeds maximum size of 3MB"})
+		return
+	}
+
+	src, err := fh.Open()
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to read uploaded file"})
+		return
+	}
+	defer src.Close()
+
+	rows, perr := parseImportCSV(src)
+	if perr != nil {
+		if errors.Is(perr, errImportEmptyFile) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "csv file is empty"})
+			return
+		}
+		c.JSON(http.StatusBadRequest, gin.H{"error": perr.Error()})
+		return
+	}
+
+	result := h.authUsecase.ImportUsers(rows)
+	c.JSON(http.StatusOK, result)
 }
 
-type messageJSON struct {
-	Message string `json:"message"`
-}
-
-type errorJSON struct {
+// simpleErrJSON is referenced by Swagger comments only.
+type simpleErrJSON struct {
 	Error string `json:"error"`
 }
 
-type bulkUsersResponse struct {
+type messageSwagger struct {
+	Message string `json:"message"`
+}
+
+type registerCreatedSwagger struct {
+	Message string             `json:"message"`
+	User    usecase.UserResponse `json:"user"`
+}
+
+type bulkUserIDsSwagger struct {
+	UserIDs []uint `json:"userIds"`
+}
+
+type bulkUsersSwagger struct {
 	Data []usecase.UserResponse `json:"data"`
 }
 
-type listUsersResponse struct {
+type listUsersSwagger struct {
 	Page  int                      `json:"page"`
 	Limit int                      `json:"limit"`
 	Data  []usecase.UserResponse `json:"data"`

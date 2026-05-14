@@ -55,25 +55,25 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     }
                 }
@@ -97,19 +97,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.messageJSON"
+                            "$ref": "#/definitions/handler.messageSwagger"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     }
                 }
@@ -117,7 +117,6 @@ const docTemplate = `{
         },
         "/api/v1/auth/register": {
             "post": {
-                "description": "Create account (role manager or member; default member). Email verification flow depends on SMTP configuration.",
                 "consumes": [
                     "application/json"
                 ],
@@ -130,7 +129,7 @@ const docTemplate = `{
                 "summary": "Register",
                 "parameters": [
                     {
-                        "description": "Credentials",
+                        "description": "Registration payload",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -143,25 +142,25 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/handler.registerCreatedResponse"
+                            "$ref": "#/definitions/handler.registerCreatedSwagger"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     },
                     "409": {
                         "description": "Conflict",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     }
                 }
@@ -194,19 +193,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.messageJSON"
+                            "$ref": "#/definitions/handler.messageSwagger"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     }
                 }
@@ -224,7 +223,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Verification token from email link",
+                        "description": "Verification token",
                         "name": "token",
                         "in": "query",
                         "required": true
@@ -234,19 +233,80 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.messageJSON"
+                            "$ref": "#/definitions/handler.messageSwagger"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/import-users": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Multipart form field \"file\": comma-separated CSV with header row (username,email,password and optional role). Max upload size 3MB. Worker pool size from IMPORT_WORKERS env (default 5).",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Bulk import users from CSV",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "CSV file",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/usecase.ImportUsersResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.simpleErrJSON"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.simpleErrJSON"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handler.simpleErrJSON"
+                        }
+                    },
+                    "413": {
+                        "description": "Request Entity Too Large",
+                        "schema": {
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     }
                 }
@@ -259,7 +319,6 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Requires global role manager.",
                 "produces": [
                     "application/json"
                 ],
@@ -287,19 +346,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.listUsersResponse"
+                            "$ref": "#/definitions/handler.listUsersSwagger"
                         }
                     },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     }
                 }
@@ -329,7 +388,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/usecase.BulkGetUsersRequest"
+                            "$ref": "#/definitions/handler.bulkUserIDsSwagger"
                         }
                     }
                 ],
@@ -337,19 +396,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.bulkUsersResponse"
+                            "$ref": "#/definitions/handler.bulkUsersSwagger"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     }
                 }
@@ -379,19 +438,19 @@ const docTemplate = `{
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/handler.errorJSON"
+                            "$ref": "#/definitions/handler.simpleErrJSON"
                         }
                     }
                 }
@@ -399,7 +458,18 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.bulkUsersResponse": {
+        "handler.bulkUserIDsSwagger": {
+            "type": "object",
+            "properties": {
+                "userIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "handler.bulkUsersSwagger": {
             "type": "object",
             "properties": {
                 "data": {
@@ -410,15 +480,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.errorJSON": {
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string"
-                }
-            }
-        },
-        "handler.listUsersResponse": {
+        "handler.listUsersSwagger": {
             "type": "object",
             "properties": {
                 "data": {
@@ -435,7 +497,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.messageJSON": {
+        "handler.messageSwagger": {
             "type": "object",
             "properties": {
                 "message": {
@@ -443,7 +505,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.registerCreatedResponse": {
+        "handler.registerCreatedSwagger": {
             "type": "object",
             "properties": {
                 "message": {
@@ -454,17 +516,45 @@ const docTemplate = `{
                 }
             }
         },
-        "usecase.BulkGetUsersRequest": {
+        "handler.simpleErrJSON": {
             "type": "object",
-            "required": [
-                "userIds"
-            ],
             "properties": {
-                "userIds": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "usecase.ImportUserError": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "rowNumber": {
+                    "type": "integer"
+                }
+            }
+        },
+        "usecase.ImportUsersResponse": {
+            "type": "object",
+            "properties": {
+                "errors": {
                     "type": "array",
                     "items": {
-                        "type": "integer"
+                        "$ref": "#/definitions/usecase.ImportUserError"
                     }
+                },
+                "errorsTruncated": {
+                    "type": "boolean"
+                },
+                "failed": {
+                    "type": "integer"
+                },
+                "success": {
+                    "type": "integer"
                 }
             }
         },
@@ -564,7 +654,7 @@ const docTemplate = `{
     },
     "securityDefinitions": {
         "BearerAuth": {
-            "description": "JWT from POST /api/v1/auth/login (prefix with \"Bearer \" in Swagger UI Authorize dialog, or paste token only depending on client)",
+            "description": "JWT from POST /api/v1/auth/login",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"
@@ -579,7 +669,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/",
 	Schemes:          []string{},
 	Title:            "Auth & User Management Service API",
-	Description:      "JWT authentication, optional email verification, session revocation, and user APIs. Use header Authorization: Bearer plus your access token.",
+	Description:      "JWT authentication, session revocation, user APIs, and CSV bulk user import for managers. Authorization header: Bearer followed by JWT.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

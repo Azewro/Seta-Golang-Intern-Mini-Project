@@ -49,11 +49,6 @@ type ResendVerificationRequest struct {
 	Email string `json:"email" binding:"required,email"`
 }
 
-// BulkGetUsersRequest resolves a batch of users by ID (used by other services).
-type BulkGetUsersRequest struct {
-	UserIDs []uint `json:"userIds" binding:"required"`
-}
-
 // UserResponse is a safe user payload without password.
 type UserResponse struct {
 	ID         uint      `json:"userId"`
@@ -82,6 +77,7 @@ type AuthUsecase interface {
 	ListUsers(page int, limit int) ([]UserResponse, error)
 	GetMyProfile(userID uint) (*UserResponse, error)
 	GetUsersByIDs(ids []uint) ([]UserResponse, error)
+	ImportUsers(rows []ImportUserRow) *ImportUsersResponse
 }
 
 type authUsecaseImpl struct {

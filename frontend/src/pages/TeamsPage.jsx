@@ -88,7 +88,7 @@ export default function TeamsPage() {
 
   useEffect(() => {
     if (!isManager && selectedTeam && token) {
-      const ids = [...new Set([...(selectedTeam.managers || []), ...(selectedTeam.members || [])])];
+      const ids = [...new Set([...(selectedTeam.managers || []), ...(selectedTeam.members || []), selectedTeam.mainManagerUserId].filter(Boolean))];
       const missingIds = ids.filter(id => !users.find(u => u.userId === id));
       if (missingIds.length > 0) {
         bulkGetUsersApi(missingIds, token)
@@ -421,3 +421,4 @@ export default function TeamsPage() {
     </section>
   );
 }
+

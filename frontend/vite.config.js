@@ -39,36 +39,14 @@ function loadRootFrontendEnv() {
 loadRootFrontendEnv();
 
 const proxyTarget = process.env.VITE_API_BASE_URL || "http://localhost:8080";
-const proxyTeamTarget = process.env.VITE_TEAM_API_BASE_URL || "http://localhost:8081";
-const proxyAssetTarget = process.env.VITE_ASSET_API_BASE_URL || "http://localhost:8082";
 
 export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
     proxy: {
-      "/api/v1/auth": {
+      "/api": {
         target: proxyTarget,
-        changeOrigin: true,
-      },
-      "/api/v1/users": {
-        target: proxyTarget,
-        changeOrigin: true,
-      },
-      "/api/v1/teams": {
-        target: proxyTeamTarget,
-        changeOrigin: true,
-      },
-      "/api/v1/folders": {
-        target: proxyAssetTarget,
-        changeOrigin: true,
-      },
-      "/api/v1/notes": {
-        target: proxyAssetTarget,
-        changeOrigin: true,
-      },
-      "/api/v1/shares": {
-        target: proxyAssetTarget,
         changeOrigin: true,
       },
     },
